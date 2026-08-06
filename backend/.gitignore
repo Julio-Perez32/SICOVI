@@ -1,0 +1,12 @@
+/backend/.env
+.env
+*.env
+node_modules
+
+# Postman
+/postman/
+/.postman/
+
+# Optional specific Postman files
+*.postman_collection.json
+*.postman_environment.json
