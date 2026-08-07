@@ -1,111 +1,162 @@
+@import "tailwindcss";
+
+/* ------------------------------------------------------------------
+   Tokens de color (paleta validada de la skill dataviz: contraste y
+   distinción CVD ya comprobados). Se definen como variables CSS crudas
+   por modo, y @theme las expone como utilidades de Tailwind
+   (bg-surface, text-ink, bg-series-1, etc.) apuntando a esas variables
+   -- así el claro/oscuro cambia en un solo lugar y tanto la UI como las
+   gráficas de recharts leen los mismos tokens.
+   ------------------------------------------------------------------ */
 :root {
-  --text: #6b6375;
-  --text-h: #08060d;
-  --bg: #fff;
-  --border: #e5e4e7;
-  --code-bg: #f4f3ec;
-  --accent: #aa3bff;
-  --accent-bg: rgba(170, 59, 255, 0.1);
-  --accent-border: rgba(170, 59, 255, 0.5);
-  --social-bg: rgba(244, 243, 236, 0.5);
-  --shadow:
-    rgba(0, 0, 0, 0.1) 0 10px 15px -3px, rgba(0, 0, 0, 0.05) 0 4px 6px -2px;
+  color-scheme: light;
 
-  --sans: system-ui, 'Segoe UI', Roboto, sans-serif;
-  --heading: system-ui, 'Segoe UI', Roboto, sans-serif;
-  --mono: ui-monospace, Consolas, monospace;
+  --page: #f9f9f7;
+  --card: #fcfcfb;
+  --ink: #0b0b0b;
+  --ink-soft: #52514e;
+  --ink-muted: #898781;
+  --hairline: #e1e0d9;
+  --line: #c3c2b7;
 
-  font: 18px/145% var(--sans);
-  letter-spacing: 0.18px;
-  color-scheme: light dark;
-  color: var(--text);
-  background: var(--bg);
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+  --series-1: #2a78d6; /* blue */
+  --series-2: #eb6834; /* orange */
+  --series-3: #1baf7a; /* aqua */
+  --series-4: #eda100; /* yellow */
+  --series-5: #e87ba4; /* magenta */
+  --series-6: #008300; /* green */
+  --series-7: #4a3aa7; /* violet */
+  --series-8: #e34948; /* red */
 
-  @media (max-width: 1024px) {
-    font-size: 16px;
-  }
+  --good: #0ca30c;
+  --warning: #fab219;
+  --serious: #ec835a;
+  --critical: #d03b3b;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --text: #9ca3af;
-    --text-h: #f3f4f6;
-    --bg: #16171d;
-    --border: #2e303a;
-    --code-bg: #1f2028;
-    --accent: #c084fc;
-    --accent-bg: rgba(192, 132, 252, 0.15);
-    --accent-border: rgba(192, 132, 252, 0.5);
-    --social-bg: rgba(47, 48, 58, 0.5);
-    --shadow:
-      rgba(0, 0, 0, 0.4) 0 10px 15px -3px, rgba(0, 0, 0, 0.25) 0 4px 6px -2px;
-  }
+    color-scheme: dark;
 
-  #social .button-icon {
-    filter: invert(1) brightness(2);
+    --page: #0d0d0d;
+    --card: #1a1a19;
+    --ink: #ffffff;
+    --ink-soft: #c3c2b7;
+    --ink-muted: #898781;
+    --hairline: #2c2c2a;
+    --line: #383835;
+
+    --series-1: #3987e5;
+    --series-2: #d95926;
+    --series-3: #199e70;
+    --series-4: #c98500;
+    --series-5: #d55181;
+    --series-6: #008300;
+    --series-7: #9085e9;
+    --series-8: #e66767;
   }
+}
+
+@theme {
+  --color-page: var(--page);
+  --color-card: var(--card);
+  --color-ink: var(--ink);
+  --color-ink-soft: var(--ink-soft);
+  --color-ink-muted: var(--ink-muted);
+  --color-hairline: var(--hairline);
+  --color-line: var(--line);
+
+  --color-series-1: var(--series-1);
+  --color-series-2: var(--series-2);
+  --color-series-3: var(--series-3);
+  --color-series-4: var(--series-4);
+  --color-series-5: var(--series-5);
+  --color-series-6: var(--series-6);
+  --color-series-7: var(--series-7);
+  --color-series-8: var(--series-8);
+
+  --color-accent: var(--series-1);
+  --color-good: var(--good);
+  --color-warning: var(--warning);
+  --color-serious: var(--serious);
+  --color-critical: var(--critical);
+
+  --font-sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
 }
 
 body {
   margin: 0;
+  background: var(--page);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
 }
 
-#root {
-  width: 1126px;
-  max-width: 100%;
-  margin: 0 auto;
-  text-align: center;
-  border-inline: 1px solid var(--border);
-  min-height: 100svh;
-  display: flex;
-  flex-direction: column;
+* {
   box-sizing: border-box;
 }
 
-h1,
-h2 {
-  font-family: var(--heading);
-  font-weight: 500;
-  color: var(--text-h);
-}
+/* ------------------------------------------------------------------
+   Piezas de UI reutilizadas en todos los formularios/tablas -- para no
+   repetir la misma sopa de clases de Tailwind en cada página.
+   ------------------------------------------------------------------ */
+@layer components {
+  .field-label {
+    @apply mb-1.5 block text-sm font-medium text-ink;
+  }
+  .field-input,
+  .field-select,
+  .field-textarea {
+    @apply w-full rounded-lg bg-page px-3 py-2 text-sm text-ink ring-1 ring-inset ring-hairline placeholder:text-ink-muted outline-none transition-shadow focus:ring-2 focus:ring-accent;
+  }
+  .field-textarea {
+    @apply resize-none;
+  }
 
-h1 {
-  font-size: 56px;
-  letter-spacing: -1.68px;
-  margin: 32px 0;
-  @media (max-width: 1024px) {
-    font-size: 36px;
-    margin: 20px 0;
+  .btn,
+  .btn-primary,
+  .btn-secondary,
+  .btn-danger {
+    @apply inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-colors disabled:opacity-50 disabled:pointer-events-none;
+  }
+  .btn-primary {
+    @apply bg-accent text-white hover:opacity-90;
+  }
+  .btn-secondary {
+    @apply bg-ink/5 text-ink hover:bg-ink/10;
+  }
+  .btn-danger {
+    @apply bg-critical/10 text-critical hover:bg-critical/20;
+  }
+  .btn-icon {
+    @apply inline-flex h-8 w-8 items-center justify-center rounded-lg text-ink-soft hover:bg-ink/5 hover:text-ink transition-colors;
+  }
+
+  .table-shell {
+    @apply overflow-x-auto rounded-2xl bg-card ring-1 ring-hairline;
+  }
+  .table-base {
+    @apply w-full min-w-max border-collapse text-sm;
+  }
+  .th {
+    @apply border-b border-hairline px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-ink-muted;
+  }
+  .td {
+    @apply border-b border-hairline px-4 py-3 text-ink align-middle;
+  }
+  tr:last-child .td {
+    @apply border-b-0;
   }
 }
-h2 {
-  font-size: 24px;
-  line-height: 118%;
-  letter-spacing: -0.24px;
-  margin: 0 0 8px;
-  @media (max-width: 1024px) {
-    font-size: 20px;
-  }
-}
-p {
-  margin: 0;
-}
 
-code,
-.counter {
-  font-family: var(--mono);
-  display: inline-flex;
-  border-radius: 4px;
-  color: var(--text-h);
+/* Scrollbar discreto para las tablas y paneles con overflow */
+.scroll-thin::-webkit-scrollbar,
+.table-shell::-webkit-scrollbar {
+  height: 8px;
+  width: 8px;
 }
-
-code {
-  font-size: 15px;
-  line-height: 135%;
-  padding: 4px 8px;
-  background: var(--code-bg);
+.scroll-thin::-webkit-scrollbar-thumb,
+.table-shell::-webkit-scrollbar-thumb {
+  background: var(--hairline);
+  border-radius: 999px;
 }
