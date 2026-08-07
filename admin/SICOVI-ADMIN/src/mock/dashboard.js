@@ -38,15 +38,19 @@ export const marginByCategory = [
   { categoria: 'Filtros', productos: 3, valorCosto: 33.83, valorVenta: 59.5, margen: 25.67 },
 ]
 
-export const salesByEmployee = [
-  { vendedor: 'Antonhy Campos', cantidadVentas: 3, totalVendido: 286.5 },
-  { vendedor: 'Karla Ramírez', cantidadVentas: 2, totalVendido: 361.99 },
+// Ya no hay varias personas vendiendo (una sola cuenta compartida
+// "Empleado", ver mock/employees.js) -- en su lugar, el desglose útil es
+// por método de pago.
+export const salesByPaymentMethod = [
+  { metodo: 'Efectivo', cantidadVentas: 3, totalVendido: 397.9 },
+  { metodo: 'Transferencia', cantidadVentas: 1, totalVendido: 151.0 },
+  { metodo: 'Tarjeta', cantidadVentas: 1, totalVendido: 89.99 },
 ]
 
 export const recentActivity = [
-  { _id: 'mov-1', producto: { codigo: 'VAL025', nombre: 'Pachón Valvoline Full Premium 10W30' }, tipo: 'salida', cantidad: -2, stockResultante: 18, usuario: { nombre: 'Antonhy Campos' }, motivo: 'Venta', createdAt: '2026-08-07T09:20:00.000Z' },
-  { _id: 'mov-2', producto: { codigo: 'BAT-650', nombre: 'Batería 12V 650 CCA' }, tipo: 'salida', cantidad: -1, stockResultante: 7, usuario: { nombre: 'Karla Ramírez' }, motivo: 'Venta', createdAt: '2026-08-07T11:05:00.000Z' },
+  { _id: 'mov-1', producto: { codigo: 'VAL025', nombre: 'Pachón Valvoline Full Premium 10W30' }, tipo: 'salida', cantidad: -2, stockResultante: 18, usuario: { nombre: 'Empleado' }, motivo: 'Venta', createdAt: '2026-08-07T09:20:00.000Z' },
+  { _id: 'mov-2', producto: { codigo: 'BAT-650', nombre: 'Batería 12V 650 CCA' }, tipo: 'salida', cantidad: -1, stockResultante: 7, usuario: { nombre: 'Empleado' }, motivo: 'Venta', createdAt: '2026-08-07T11:05:00.000Z' },
   { _id: 'mov-3', producto: { codigo: 'BAT-650', nombre: 'Batería 12V 650 CCA' }, tipo: 'entrada', cantidad: 8, stockResultante: 15, usuario: { nombre: 'Administrador SICOVI' }, motivo: 'Compra a proveedor', createdAt: '2026-08-05T15:40:00.000Z' },
   { _id: 'mov-4', producto: { codigo: 'LLT-R15', nombre: 'Llanta 185/65 R15' }, tipo: 'entrada', cantidad: 4, stockResultante: 10, usuario: { nombre: 'Administrador SICOVI' }, motivo: 'Anulación de venta', createdAt: '2026-08-06T18:00:00.000Z' },
-  { _id: 'mov-5', producto: { codigo: 'PH6607', nombre: 'Filtro de aceite IRSA PH6607 L266 / PH2876' }, tipo: 'salida', cantidad: -3, stockResultante: 0, usuario: { nombre: 'Karla Ramírez' }, motivo: 'Venta', createdAt: '2026-08-07T08:05:00.000Z' },
+  { _id: 'mov-5', producto: { codigo: 'PH6607', nombre: 'Filtro de aceite IRSA PH6607 L266 / PH2876' }, tipo: 'salida', cantidad: -3, stockResultante: 0, usuario: { nombre: 'Empleado' }, motivo: 'Venta', createdAt: '2026-08-07T08:05:00.000Z' },
 ]

@@ -1,4 +1,6 @@
-// Datos de ejemplo -- misma forma que devuelve GET /api/auth/employees
+// Datos de ejemplo -- ya no hay cuentas individuales por empleado: solo
+// el admin y una cuenta compartida "Empleado" que usa cualquiera que esté
+// en caja para registrar ventas.
 export const employees = [
   {
     _id: 'user-1',
@@ -10,30 +12,16 @@ export const employees = [
     createdAt: '2026-08-01T10:00:00.000Z',
   },
   {
-    _id: 'user-2',
-    nombre: 'Antonhy Campos',
-    email: 'antonhy.campos@sicovi.com',
+    _id: 'user-empleado',
+    nombre: 'Empleado',
+    email: 'empleado@sicovi.com',
     rol: 'empleado',
-    telefono: '7845-1230',
+    telefono: '',
     activo: true,
-    createdAt: '2026-08-02T14:30:00.000Z',
-  },
-  {
-    _id: 'user-3',
-    nombre: 'Karla Ramírez',
-    email: 'karla.ramirez@sicovi.com',
-    rol: 'empleado',
-    telefono: '7011-4456',
-    activo: true,
-    createdAt: '2026-08-03T09:15:00.000Z',
-  },
-  {
-    _id: 'user-4',
-    nombre: 'Oscar Meléndez',
-    email: 'oscar.melendez@sicovi.com',
-    rol: 'empleado',
-    telefono: '7920-8871',
-    activo: false,
-    createdAt: '2026-08-04T16:45:00.000Z',
+    createdAt: '2026-08-01T10:05:00.000Z',
   },
 ]
+
+// La cuenta compartida que usan todos los que venden -- la que administra
+// la página "Acceso de ventas".
+export const sharedSalesAccount = employees.find((e) => e.rol === 'empleado')

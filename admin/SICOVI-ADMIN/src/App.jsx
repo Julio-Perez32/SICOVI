@@ -25,7 +25,7 @@ function App() {
         <Route path="/proveedores" element={<SuppliersPage />} />
         <Route path="/compras" element={<PurchasesPage />} />
         <Route path="/ventas" element={<SalesPage />} />
-        <Route path="/empleados" element={<EmployeesPage />} />
+        <Route path="/acceso-ventas" element={<EmployeesPage />} />
         <Route path="/alertas" element={<AlertsPage />} />
       </Route>
 

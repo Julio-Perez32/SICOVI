@@ -4,8 +4,7 @@ import { currentEmployee } from '../mock/session'
 
 const TITLES = {
   '/': 'Vender',
-  '/ventas': 'Mis ventas',
-  '/cuenta': 'Mi cuenta',
+  '/ventas': 'Ventas',
 }
 
 export default function Topbar({ onOpenMobileNav }) {

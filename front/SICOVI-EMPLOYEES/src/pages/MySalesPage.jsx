@@ -14,7 +14,7 @@ export default function MySalesPage() {
 
   return (
     <div>
-      <PageHeader title="Mis ventas" description="Historial de ventas que has registrado" />
+      <PageHeader title="Ventas" description="Historial de ventas registradas desde esta terminal" />
 
       <div className="mb-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
         <StatCard

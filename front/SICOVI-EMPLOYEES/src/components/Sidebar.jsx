@@ -1,10 +1,9 @@
 import { NavLink } from 'react-router-dom'
-import { ShoppingCart, Receipt, UserRound, Wrench, X } from 'lucide-react'
+import { ShoppingCart, Receipt, Wrench, X } from 'lucide-react'
 
 const NAV_ITEMS = [
   { to: '/', label: 'Vender', icon: ShoppingCart, end: true },
-  { to: '/ventas', label: 'Mis ventas', icon: Receipt },
-  { to: '/cuenta', label: 'Mi cuenta', icon: UserRound },
+  { to: '/ventas', label: 'Ventas', icon: Receipt },
 ]
 
 function NavItems({ onNavigate }) {

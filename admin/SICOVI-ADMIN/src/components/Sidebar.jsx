@@ -6,7 +6,7 @@ import {
   Truck,
   ShoppingCart,
   Receipt,
-  Users,
+  KeyRound,
   BellRing,
   Wrench,
   X,
@@ -20,7 +20,7 @@ const NAV_ITEMS = [
   { to: '/proveedores', label: 'Proveedores', icon: Truck },
   { to: '/compras', label: 'Compras', icon: ShoppingCart },
   { to: '/ventas', label: 'Ventas', icon: Receipt },
-  { to: '/empleados', label: 'Empleados', icon: Users },
+  { to: '/acceso-ventas', label: 'Acceso de ventas', icon: KeyRound },
 ]
 
 function NavItems({ onNavigate }) {

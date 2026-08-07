@@ -1,50 +1,28 @@
-import { useMemo, useState } from 'react'
+import { useState } from 'react'
 import { Eye, Ban } from 'lucide-react'
 import PageHeader from '../components/PageHeader'
 import Badge from '../components/Badge'
 import Modal from '../components/Modal'
 import { formatCurrency, formatDateTime } from '../lib/format'
 import { sales } from '../mock/sales'
-import { employees } from '../mock/employees'
 
 const METODOS = { efectivo: 'Efectivo', tarjeta: 'Tarjeta', transferencia: 'Transferencia', otro: 'Otro' }
 
 export default function SalesPage() {
-  const [vendedorFiltro, setVendedorFiltro] = useState('')
   const [detalle, setDetalle] = useState(null)
-  const vendedores = employees.filter((e) => e.rol === 'empleado')
-
-  const ventasFiltradas = useMemo(() => {
-    if (!vendedorFiltro) return sales
-    return sales.filter((v) => v.vendedor._id === vendedorFiltro)
-  }, [vendedorFiltro])
 
   return (
     <div>
       <PageHeader
         title="Ventas"
-        description="Todas las ventas registradas por los empleados"
+        description="Todas las ventas registradas desde la terminal de empleados"
       />
-
-      <div className="mb-4 flex flex-wrap items-center gap-2">
-        <select
-          className="field-select w-auto"
-          value={vendedorFiltro}
-          onChange={(e) => setVendedorFiltro(e.target.value)}
-        >
-          <option value="">Todos los vendedores</option>
-          {vendedores.map((v) => (
-            <option key={v._id} value={v._id}>{v.nombre}</option>
-          ))}
-        </select>
-      </div>
 
       <div className="table-shell">
         <table className="table-base">
           <thead>
             <tr>
               <th className="th">Fecha</th>
-              <th className="th">Vendedor</th>
               <th className="th">Cliente</th>
               <th className="th">Método</th>
               <th className="th text-right">Total</th>
@@ -53,11 +31,10 @@ export default function SalesPage() {
             </tr>
           </thead>
           <tbody>
-            {ventasFiltradas.map((v) => (
+            {sales.map((v) => (
               <tr key={v._id} className="hover:bg-ink/[0.02]">
                 <td className="td text-ink-soft">{formatDateTime(v.fecha)}</td>
-                <td className="td font-medium text-ink">{v.vendedor.nombre}</td>
-                <td className="td text-ink-soft">{v.cliente || '—'}</td>
+                <td className="td font-medium text-ink">{v.cliente || '—'}</td>
                 <td className="td text-ink-soft">{METODOS[v.metodoPago] || v.metodoPago}</td>
                 <td className="td text-right tabular-nums font-medium">{formatCurrency(v.total)}</td>
                 <td className="td">
@@ -84,7 +61,7 @@ export default function SalesPage() {
       <Modal
         open={!!detalle}
         onClose={() => setDetalle(null)}
-        title={detalle ? `Venta de ${detalle.vendedor.nombre}` : ''}
+        title="Detalle de la venta"
         description={detalle ? `${formatDateTime(detalle.fecha)} · ${detalle.cliente || 'Consumidor final'}` : ''}
         size="lg"
       >

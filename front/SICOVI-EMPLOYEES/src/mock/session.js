@@ -1,11 +1,11 @@
-// Identidad de ejemplo del empleado "logueado" -- misma forma que
-// devuelve GET /api/auth/me
+// Identidad de ejemplo de la sesión "empleado" -- un solo usuario
+// compartido que usa cualquiera que esté en caja (no hay cuentas
+// individuales por persona). Misma forma que devuelve GET /api/auth/me.
 export const currentEmployee = {
-  _id: 'user-2',
-  nombre: 'Antonhy Campos',
-  email: 'antonhy.campos@sicovi.com',
+  _id: 'user-empleado',
+  nombre: 'Empleado',
+  email: 'empleado@sicovi.com',
   rol: 'empleado',
-  telefono: '7845-1230',
   activo: true,
-  createdAt: '2026-08-02T14:30:00.000Z',
+  createdAt: '2026-08-01T10:00:00.000Z',
 }

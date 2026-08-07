@@ -1,6 +1,6 @@
-// Datos de ejemplo -- misma forma que devuelve GET /api/sales para un
-// empleado (solo ve las suyas). Corresponden a "Antonhy Campos"
-// (ver mock/session.js).
+// Datos de ejemplo -- misma forma que devuelve GET /api/sales para el rol
+// "empleado" (todas se hicieron desde la cuenta compartida, ver
+// mock/session.js).
 export const mySales = [
   {
     _id: 'sale-1',

@@ -30,7 +30,7 @@ import {
   salesTimeseries,
   topProducts,
   marginByCategory,
-  salesByEmployee,
+  salesByPaymentMethod,
   recentActivity,
 } from '../mock/dashboard'
 
@@ -59,7 +59,7 @@ export default function DashboardPage() {
     .slice(0, 5)
     .reverse() // recharts vertical bar dibuja de abajo hacia arriba
 
-  const maxVendedor = Math.max(...salesByEmployee.map((v) => v.totalVendido))
+  const maxMetodo = Math.max(...salesByPaymentMethod.map((m) => m.totalVendido))
 
   return (
     <div>
@@ -240,24 +240,24 @@ export default function DashboardPage() {
         </SectionCard>
 
         <SectionCard
-          title="Ventas por empleado"
+          title="Ventas por método de pago"
           description="Total vendido (no anuladas)"
           className="xl:col-span-2"
         >
           <div className="flex flex-col gap-4 py-1">
-            {salesByEmployee.map((v) => (
-              <div key={v.vendedor}>
+            {salesByPaymentMethod.map((m) => (
+              <div key={m.metodo}>
                 <div className="mb-1.5 flex items-baseline justify-between text-sm">
-                  <span className="font-medium text-ink">{v.vendedor}</span>
-                  <span className="text-ink-soft">{formatCurrency(v.totalVendido)}</span>
+                  <span className="font-medium text-ink">{m.metodo}</span>
+                  <span className="text-ink-soft">{formatCurrency(m.totalVendido)}</span>
                 </div>
                 <div className="h-2 w-full overflow-hidden rounded-full bg-[color-mix(in_srgb,var(--series-1)_15%,transparent)]">
                   <div
                     className="h-full rounded-full bg-series-1"
-                    style={{ width: `${Math.max(6, (v.totalVendido / maxVendedor) * 100)}%` }}
+                    style={{ width: `${Math.max(6, (m.totalVendido / maxMetodo) * 100)}%` }}
                   />
                 </div>
-                <p className="mt-1 text-xs text-ink-muted">{v.cantidadVentas} ventas</p>
+                <p className="mt-1 text-xs text-ink-muted">{m.cantidadVentas} ventas</p>
               </div>
             ))}
           </div>

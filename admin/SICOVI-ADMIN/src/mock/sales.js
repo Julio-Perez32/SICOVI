@@ -1,8 +1,12 @@
-// Datos de ejemplo -- misma forma que devuelve GET /api/sales
+// Datos de ejemplo -- misma forma que devuelve GET /api/sales. Todas las
+// ventas quedan a nombre de la cuenta compartida "Empleado" (ver
+// mock/employees.js) -- ya no se distingue qué persona la hizo.
+const EMPLEADO = { _id: 'user-empleado', nombre: 'Empleado' }
+
 export const sales = [
   {
     _id: 'sale-1',
-    vendedor: { _id: 'user-2', nombre: 'Antonhy Campos' },
+    vendedor: EMPLEADO,
     cliente: 'Oscar Meléndez',
     metodoPago: 'efectivo',
     fecha: '2026-08-07T09:20:00.000Z',
@@ -15,7 +19,7 @@ export const sales = [
   },
   {
     _id: 'sale-2',
-    vendedor: { _id: 'user-3', nombre: 'Karla Ramírez' },
+    vendedor: EMPLEADO,
     cliente: 'Consumidor final',
     metodoPago: 'tarjeta',
     fecha: '2026-08-07T11:05:00.000Z',
@@ -25,7 +29,7 @@ export const sales = [
   },
   {
     _id: 'sale-3',
-    vendedor: { _id: 'user-2', nombre: 'Antonhy Campos' },
+    vendedor: EMPLEADO,
     cliente: 'Taller Rivas',
     metodoPago: 'transferencia',
     fecha: '2026-08-06T16:40:00.000Z',
@@ -38,7 +42,7 @@ export const sales = [
   },
   {
     _id: 'sale-4',
-    vendedor: { _id: 'user-3', nombre: 'Karla Ramírez' },
+    vendedor: EMPLEADO,
     cliente: 'Consumidor final',
     metodoPago: 'efectivo',
     fecha: '2026-08-06T10:15:00.000Z',
@@ -49,7 +53,7 @@ export const sales = [
   },
   {
     _id: 'sale-5',
-    vendedor: { _id: 'user-2', nombre: 'Antonhy Campos' },
+    vendedor: EMPLEADO,
     cliente: 'Consumidor final',
     metodoPago: 'efectivo',
     fecha: '2026-08-05T13:50:00.000Z',

@@ -5,7 +5,7 @@ import { Wrench, Mail, Lock, ArrowRight } from 'lucide-react'
 // Todavía sin conectar al backend: el submit solo navega a "Vender".
 export default function LoginPage() {
   const navigate = useNavigate()
-  const [email, setEmail] = useState('antonhy.campos@sicovi.com')
+  const [email, setEmail] = useState('empleado@sicovi.com')
   const [password, setPassword] = useState('')
 
   function handleSubmit(e) {

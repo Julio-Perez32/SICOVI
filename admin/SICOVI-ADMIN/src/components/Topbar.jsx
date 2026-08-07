@@ -9,7 +9,7 @@ const TITLES = {
   '/proveedores': 'Proveedores',
   '/compras': 'Compras',
   '/ventas': 'Ventas',
-  '/empleados': 'Empleados',
+  '/acceso-ventas': 'Acceso de ventas',
   '/alertas': 'Alertas de stock',
 }
 
