@@ -1,40 +1,55 @@
 const { Notification, User } = require("../model");
 const sendEmail = require("./sendEmail");
 
+// Qué tan grave está el stock de un producto en este momento.
+function calcularSeveridad(product) {
+  if (product.stock <= 0) return "sin_stock";
+  if (product.stock <= product.stockMinimo) return "stock_bajo";
+  return null; // saludable, no amerita alerta
+}
+
 // Se llama después de guardar cualquier cambio de stock sobre un producto
-// (venta, anulación, compra, ajuste). Decide si hay que:
-//  - crear una alerta nueva (stock bajo / sin stock) y avisar a los admins
-//  - o limpiar la alerta si el producto ya se volvió a abastecer
-// La bandera product.alertaActiva evita mandar el mismo correo una y otra vez
-// mientras el stock siga bajo: solo se dispara al cruzar el umbral hacia abajo.
+// (venta, anulación, compra, ajuste). Compara la severidad actual contra la
+// última que se avisó (product.ultimoTipoAlerta):
+//  - si es distinta (pasó de saludable a stock_bajo, de stock_bajo a
+//    sin_stock, o -tras reabastecer- volvió a caer) crea una notificación
+//    nueva y avisa a los admins por correo.
+//  - si es la misma severidad que la última vez, no repite el aviso.
+//  - si el producto ya está saludable, limpia el estado para la próxima vez.
+//
+// Comparar por severidad (en vez de un simple booleano "ya avisé sí/no") es
+// lo que evita este caso: producto se queda en 0 (avisa), se le agrega un
+// poco de stock sin llegar al mínimo, y se vuelve a vender hasta 0 -- con
+// un booleano esa segunda caída se quedaba sin avisar porque la bandera
+// nunca se había apagado.
 async function evaluarAlertaStock(product) {
-  const bajoMinimo = product.stock <= product.stockMinimo;
+  const severidad = calcularSeveridad(product);
 
-  if (bajoMinimo && !product.alertaActiva) {
-    const tipo = product.stock <= 0 ? "sin_stock" : "stock_bajo";
-    const mensaje =
-      tipo === "sin_stock"
-        ? `El producto "${product.nombre}" (${product.codigo}) se quedó sin stock.`
-        : `El producto "${product.nombre}" (${product.codigo}) tiene stock bajo: quedan ${product.stock} unidades (mínimo: ${product.stockMinimo}).`;
+  if (severidad === product.ultimoTipoAlerta) return; // nada cambió, no repetir
 
-    await Notification.create({ producto: product._id, tipo, mensaje });
-
-    product.alertaActiva = true;
+  if (severidad === null) {
+    product.ultimoTipoAlerta = null;
     await product.save();
+    return;
+  }
 
-    const admins = await User.find({ rol: "admin", activo: true }).select("email");
-    if (admins.length) {
-      await sendEmail({
-        to: admins.map((a) => a.email).join(","),
-        subject: `SICOVI - ${tipo === "sin_stock" ? "Producto sin stock" : "Stock bajo"}: ${product.nombre}`,
-        html: `<p>${mensaje}</p><p>Código: ${product.codigo}</p>`,
-      });
-    }
-  } else if (!bajoMinimo && product.alertaActiva) {
-    // El producto se re-abasteció por encima del mínimo: se apaga la bandera
-    // para que la próxima vez que baje del umbral vuelva a avisar.
-    product.alertaActiva = false;
-    await product.save();
+  const mensaje =
+    severidad === "sin_stock"
+      ? `El producto "${product.nombre}" (${product.codigo}) se quedó sin stock.`
+      : `El producto "${product.nombre}" (${product.codigo}) tiene stock bajo: quedan ${product.stock} unidades (mínimo: ${product.stockMinimo}).`;
+
+  await Notification.create({ producto: product._id, tipo: severidad, mensaje });
+
+  product.ultimoTipoAlerta = severidad;
+  await product.save();
+
+  const admins = await User.find({ rol: "admin", activo: true }).select("email");
+  if (admins.length) {
+    await sendEmail({
+      to: admins.map((a) => a.email).join(","),
+      subject: `SICOVI - ${severidad === "sin_stock" ? "Producto sin stock" : "Stock bajo"}: ${product.nombre}`,
+      html: `<p>${mensaje}</p><p>Código: ${product.codigo}</p>`,
+    });
   }
 }
 

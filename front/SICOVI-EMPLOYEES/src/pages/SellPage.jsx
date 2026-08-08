@@ -41,8 +41,12 @@ export default function SellPage() {
     setCargando(true)
     setErrorLista('')
     try {
-      const query = busqueda ? `?buscar=${encodeURIComponent(busqueda)}` : ''
-      const data = await apiFetch(`/products${query}`)
+      // Acá no tiene sentido paginar (el empleado está atendiendo a
+      // alguien, no va a andar pasando páginas) -- se trae el catálogo
+      // completo de una vez, hasta el máximo que permite el backend.
+      const params = new URLSearchParams({ limite: '100' })
+      if (busqueda) params.set('buscar', busqueda)
+      const data = await apiFetch(`/products?${params.toString()}`)
       setProductos(data.productos)
     } catch (err) {
       setErrorLista(err.message)

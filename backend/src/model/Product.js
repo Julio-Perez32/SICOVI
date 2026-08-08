@@ -69,9 +69,15 @@ const productSchema = new mongoose.Schema(
       type: String,
       default: null,
     },
-    alertaActiva: {
-      type: Boolean,
-      default: false,
+    // Qué tan grave era la última alerta de stock que se avisó para este
+    // producto ("stock_bajo" | "sin_stock" | null si está saludable). Se
+    // compara por severidad (no un simple sí/no) en utils/stockAlert.js
+    // para poder volver a avisar si, después de reabastecer un poco sin
+    // llegar al mínimo, el producto se vuelve a quedar en cero.
+    ultimoTipoAlerta: {
+      type: String,
+      enum: ["stock_bajo", "sin_stock", null],
+      default: null,
     },
     activo: {
       type: Boolean,
