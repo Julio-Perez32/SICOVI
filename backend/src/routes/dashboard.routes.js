@@ -6,6 +6,7 @@ const {
   getTopProducts,
   getMarginByCategory,
   getSalesByEmployee,
+  getSalesByPaymentMethod,
   getRecentActivity,
 } = require("../controller/dashboard.controller");
 
@@ -19,6 +20,7 @@ router.get("/sales-timeseries", getSalesTimeseries);
 router.get("/top-products", getTopProducts);
 router.get("/margin-by-category", getMarginByCategory);
 router.get("/sales-by-employee", getSalesByEmployee);
+router.get("/sales-by-payment-method", getSalesByPaymentMethod);
 router.get("/recent-activity", getRecentActivity);
 
 module.exports = router;

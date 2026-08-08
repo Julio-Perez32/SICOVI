@@ -1,9 +1,9 @@
-import { useMemo, useState } from 'react'
-import { Search, Plus, Minus, Trash2, ShoppingCart, CheckCircle2 } from 'lucide-react'
+import { useEffect, useState } from 'react'
+import { Search, Plus, Minus, Trash2, ShoppingCart, CheckCircle2, TriangleAlert } from 'lucide-react'
 import Badge from '../components/Badge'
 import EmptyState from '../components/EmptyState'
 import { formatCurrency } from '../lib/format'
-import { products } from '../mock/products'
+import { apiFetch } from '../lib/api'
 
 const METODOS = [
   { value: 'efectivo', label: 'Efectivo' },
@@ -20,16 +20,36 @@ function stockBadge(producto) {
 
 export default function SellPage() {
   const [busqueda, setBusqueda] = useState('')
+  const [productos, setProductos] = useState([])
+  const [cargando, setCargando] = useState(true)
+  const [errorLista, setErrorLista] = useState('')
+
   const [cart, setCart] = useState([]) // [{ productId, codigo, nombre, precioVenta, cantidad, stockDisponible }]
   const [cliente, setCliente] = useState('')
   const [metodoPago, setMetodoPago] = useState('efectivo')
   const [confirmacion, setConfirmacion] = useState(false)
+  const [errorVenta, setErrorVenta] = useState('')
+  const [registrando, setRegistrando] = useState(false)
 
-  const productosFiltrados = useMemo(() => {
-    const q = busqueda.trim().toLowerCase()
-    if (!q) return products
-    return products.filter((p) => p.nombre.toLowerCase().includes(q) || p.codigo.toLowerCase().includes(q))
+  useEffect(() => {
+    const idTimer = setTimeout(() => cargarProductos(), 250)
+    return () => clearTimeout(idTimer)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [busqueda])
+
+  async function cargarProductos() {
+    setCargando(true)
+    setErrorLista('')
+    try {
+      const query = busqueda ? `?buscar=${encodeURIComponent(busqueda)}` : ''
+      const data = await apiFetch(`/products${query}`)
+      setProductos(data.productos)
+    } catch (err) {
+      setErrorLista(err.message)
+    } finally {
+      setCargando(false)
+    }
+  }
 
   function agregarAlCarrito(producto) {
     if (producto.stock <= 0) return
@@ -71,15 +91,31 @@ export default function SellPage() {
 
   const total = cart.reduce((acc, it) => acc + it.cantidad * it.precioVenta, 0)
 
-  function handleRegistrarVenta(e) {
+  async function handleRegistrarVenta(e) {
     e.preventDefault()
     if (cart.length === 0) return
-    // Todavía sin conectar al backend: solo limpia el carrito y confirma.
-    setCart([])
-    setCliente('')
-    setMetodoPago('efectivo')
-    setConfirmacion(true)
-    setTimeout(() => setConfirmacion(false), 3000)
+    setErrorVenta('')
+    setRegistrando(true)
+    try {
+      await apiFetch('/sales', {
+        method: 'POST',
+        body: {
+          cliente: cliente || undefined,
+          metodoPago,
+          items: cart.map((it) => ({ productoId: it.productId, cantidad: it.cantidad })),
+        },
+      })
+      setCart([])
+      setCliente('')
+      setMetodoPago('efectivo')
+      setConfirmacion(true)
+      setTimeout(() => setConfirmacion(false), 3000)
+      await cargarProductos() // refleja el stock nuevo
+    } catch (err) {
+      setErrorVenta(err.message)
+    } finally {
+      setRegistrando(false)
+    }
   }
 
   return (
@@ -96,41 +132,50 @@ export default function SellPage() {
           />
         </div>
 
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
-          {productosFiltrados.map((p) => {
-            const sinStock = p.stock <= 0
-            return (
-              <div key={p._id} className="flex flex-col justify-between rounded-2xl bg-card p-4 ring-1 ring-hairline">
-                <div>
-                  <div className="mb-1.5 flex items-start justify-between gap-2">
-                    <p className="text-sm font-medium leading-snug text-ink">{p.nombre}</p>
-                  </div>
-                  <p className="text-xs text-ink-muted">{p.codigo} · {p.categoria?.nombre}</p>
-                  <div className="mt-2 flex items-center gap-2">
-                    {stockBadge(p)}
-                    <span className="text-xs text-ink-muted">{p.stock} disponibles</span>
-                  </div>
-                </div>
-                <div className="mt-3 flex items-center justify-between">
-                  <span className="text-lg font-semibold text-ink">{formatCurrency(p.precioVenta)}</span>
-                  <button
-                    type="button"
-                    onClick={() => agregarAlCarrito(p)}
-                    disabled={sinStock}
-                    className="btn-primary px-3! py-1.5! text-sm"
-                  >
-                    <Plus size={15} />
-                    Agregar
-                  </button>
-                </div>
-              </div>
-            )
-          })}
-        </div>
+        {errorLista && (
+          <div className="mb-4 flex items-center gap-2 rounded-lg bg-critical/10 px-3 py-2 text-sm text-critical">
+            <TriangleAlert size={16} />
+            {errorLista}
+          </div>
+        )}
 
-        {productosFiltrados.length === 0 && (
+        {cargando ? (
+          <EmptyState title="Cargando catálogo..." />
+        ) : productos.length === 0 ? (
           <div className="table-shell">
             <EmptyState icon={Search} title="Sin resultados" description="Prueba con otro código o nombre" />
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
+            {productos.map((p) => {
+              const sinStock = p.stock <= 0
+              return (
+                <div key={p._id} className="flex flex-col justify-between rounded-2xl bg-card p-4 ring-1 ring-hairline">
+                  <div>
+                    <div className="mb-1.5 flex items-start justify-between gap-2">
+                      <p className="text-sm font-medium leading-snug text-ink">{p.nombre}</p>
+                    </div>
+                    <p className="text-xs text-ink-muted">{p.codigo} · {p.categoria?.nombre}</p>
+                    <div className="mt-2 flex items-center gap-2">
+                      {stockBadge(p)}
+                      <span className="text-xs text-ink-muted">{p.stock} disponibles</span>
+                    </div>
+                  </div>
+                  <div className="mt-3 flex items-center justify-between">
+                    <span className="text-lg font-semibold text-ink">{formatCurrency(p.precioVenta)}</span>
+                    <button
+                      type="button"
+                      onClick={() => agregarAlCarrito(p)}
+                      disabled={sinStock}
+                      className="btn-primary px-3! py-1.5! text-sm"
+                    >
+                      <Plus size={15} />
+                      Agregar
+                    </button>
+                  </div>
+                </div>
+              )
+            })}
           </div>
         )}
       </div>
@@ -187,6 +232,13 @@ export default function SellPage() {
           </div>
 
           <div className="border-t border-hairline px-5 py-4">
+            {errorVenta && (
+              <div className="mb-3 flex items-center gap-2 rounded-lg bg-critical/10 px-3 py-2 text-sm text-critical">
+                <TriangleAlert size={16} />
+                {errorVenta}
+              </div>
+            )}
+
             <div className="mb-3">
               <label className="field-label" htmlFor="cliente">Cliente (opcional)</label>
               <input
@@ -211,14 +263,14 @@ export default function SellPage() {
               <span className="text-xl font-semibold text-ink">{formatCurrency(total)}</span>
             </div>
 
-            <button type="submit" disabled={cart.length === 0} className="btn-primary w-full">
-              Registrar venta
+            <button type="submit" disabled={cart.length === 0 || registrando} className="btn-primary w-full">
+              {registrando ? 'Registrando...' : 'Registrar venta'}
             </button>
 
             {confirmacion && (
               <div className="mt-3 flex items-center gap-2 rounded-lg bg-good/10 px-3 py-2 text-sm text-good">
                 <CheckCircle2 size={16} />
-                Venta registrada (vista previa -- todavía no se guarda)
+                Venta registrada
               </div>
             )}
           </div>

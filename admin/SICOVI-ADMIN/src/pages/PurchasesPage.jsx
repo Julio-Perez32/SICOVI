@@ -1,30 +1,73 @@
-import { useMemo, useState } from 'react'
-import { Plus, Trash2, Eye } from 'lucide-react'
+import { useEffect, useMemo, useState } from 'react'
+import { Plus, Trash2, Eye, TriangleAlert } from 'lucide-react'
 import PageHeader from '../components/PageHeader'
 import Modal from '../components/Modal'
+import EmptyState from '../components/EmptyState'
 import { formatCurrency, formatDate } from '../lib/format'
-import { purchases } from '../mock/purchases'
-import { suppliers } from '../mock/suppliers'
+import { apiFetch } from '../lib/api'
+import useSuppliers from '../hooks/useSuppliers'
 
-const emptyRow = { codigo: '', descripcion: '', cantidad: '', precioUnitario: '' }
+const emptyRow = { codigo: '', descripcion: '', cantidad: '', precioUnitario: '', precioVenta: '' }
 
 export default function PurchasesPage() {
+  const [compras, setCompras] = useState([])
+  const [cargando, setCargando] = useState(true)
+  const [errorLista, setErrorLista] = useState('')
+  const [productos, setProductos] = useState([])
+
   const [modalOpen, setModalOpen] = useState(false)
   const [detalle, setDetalle] = useState(null)
   const [proveedor, setProveedor] = useState('')
   const [numeroDocumento, setNumeroDocumento] = useState('')
   const [items, setItems] = useState([{ ...emptyRow }])
+  const [errorForm, setErrorForm] = useState('')
+  const [guardando, setGuardando] = useState(false)
+
+  const { suppliers } = useSuppliers()
+
+  useEffect(() => {
+    cargarCompras()
+  }, [])
+
+  async function cargarCompras() {
+    setCargando(true)
+    setErrorLista('')
+    try {
+      const data = await apiFetch('/purchases')
+      setCompras(data.compras)
+    } catch (err) {
+      setErrorLista(err.message)
+    } finally {
+      setCargando(false)
+    }
+  }
+
+  async function cargarProductosParaCombobox() {
+    try {
+      const data = await apiFetch('/products?limite=100')
+      setProductos(data.productos)
+    } catch {
+      setProductos([])
+    }
+  }
 
   const total = useMemo(
     () => items.reduce((acc, it) => acc + (Number(it.cantidad) || 0) * (Number(it.precioUnitario) || 0), 0),
     [items]
   )
 
+  function esProductoNuevo(codigo) {
+    if (!codigo) return false
+    return !productos.some((p) => p.codigo.toLowerCase() === codigo.trim().toLowerCase())
+  }
+
   function abrirNueva() {
     setProveedor('')
     setNumeroDocumento('')
     setItems([{ ...emptyRow }])
+    setErrorForm('')
     setModalOpen(true)
+    cargarProductosParaCombobox()
   }
 
   function actualizarItem(index, campo, valor) {
@@ -37,6 +80,48 @@ export default function PurchasesPage() {
 
   function quitarFila(index) {
     setItems((prev) => (prev.length > 1 ? prev.filter((_, i) => i !== index) : prev))
+  }
+
+  async function handleSubmit(e) {
+    e.preventDefault()
+    setErrorForm('')
+
+    if (!proveedor) {
+      setErrorForm('Selecciona un proveedor')
+      return
+    }
+    const lineasValidas = items.filter((it) => it.codigo && it.cantidad && it.precioUnitario)
+    if (lineasValidas.length === 0) {
+      setErrorForm('Agrega al menos un producto con código, cantidad y precio')
+      return
+    }
+    const faltaPrecioVenta = lineasValidas.find((it) => esProductoNuevo(it.codigo) && !it.precioVenta)
+    if (faltaPrecioVenta) {
+      setErrorForm(`Falta el precio de venta para el producto nuevo "${faltaPrecioVenta.codigo}"`)
+      return
+    }
+
+    setGuardando(true)
+    try {
+      const payload = {
+        proveedor,
+        numeroDocumento,
+        items: lineasValidas.map((it) => ({
+          codigo: it.codigo,
+          descripcion: it.descripcion,
+          cantidad: Number(it.cantidad),
+          precioUnitario: Number(it.precioUnitario),
+          ...(esProductoNuevo(it.codigo) ? { precioVenta: Number(it.precioVenta) } : {}),
+        })),
+      }
+      await apiFetch('/purchases', { method: 'POST', body: payload })
+      setModalOpen(false)
+      await cargarCompras()
+    } catch (err) {
+      setErrorForm(err.message)
+    } finally {
+      setGuardando(false)
+    }
   }
 
   return (
@@ -52,37 +137,50 @@ export default function PurchasesPage() {
         }
       />
 
+      {errorLista && (
+        <div className="mb-4 flex items-center gap-2 rounded-lg bg-critical/10 px-3 py-2 text-sm text-critical">
+          <TriangleAlert size={16} />
+          {errorLista}
+        </div>
+      )}
+
       <div className="table-shell">
-        <table className="table-base">
-          <thead>
-            <tr>
-              <th className="th">Proveedor</th>
-              <th className="th">N° documento</th>
-              <th className="th">Fecha</th>
-              <th className="th text-right">Líneas</th>
-              <th className="th text-right">Total</th>
-              <th className="th"></th>
-            </tr>
-          </thead>
-          <tbody>
-            {purchases.map((p) => (
-              <tr key={p._id} className="hover:bg-ink/[0.02]">
-                <td className="td font-medium text-ink">{p.proveedor.nombre}</td>
-                <td className="td text-ink-soft">{p.numeroDocumento}</td>
-                <td className="td text-ink-soft">{formatDate(p.fecha)}</td>
-                <td className="td text-right tabular-nums">{p.items.length}</td>
-                <td className="td text-right tabular-nums font-medium">{formatCurrency(p.total)}</td>
-                <td className="td">
-                  <div className="flex justify-end">
-                    <button type="button" onClick={() => setDetalle(p)} className="btn-icon" aria-label="Ver detalle">
-                      <Eye size={15} />
-                    </button>
-                  </div>
-                </td>
+        {cargando ? (
+          <EmptyState title="Cargando compras..." />
+        ) : compras.length === 0 ? (
+          <EmptyState title="Sin compras" description="Registra la primera entrada de mercadería" />
+        ) : (
+          <table className="table-base">
+            <thead>
+              <tr>
+                <th className="th">Proveedor</th>
+                <th className="th">N° documento</th>
+                <th className="th">Fecha</th>
+                <th className="th text-right">Líneas</th>
+                <th className="th text-right">Total</th>
+                <th className="th"></th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {compras.map((p) => (
+                <tr key={p._id} className="hover:bg-ink/[0.02]">
+                  <td className="td font-medium text-ink">{p.proveedor?.nombre || '—'}</td>
+                  <td className="td text-ink-soft">{p.numeroDocumento || '—'}</td>
+                  <td className="td text-ink-soft">{formatDate(p.fecha)}</td>
+                  <td className="td text-right tabular-nums">{p.items.length}</td>
+                  <td className="td text-right tabular-nums font-medium">{formatCurrency(p.total)}</td>
+                  <td className="td">
+                    <div className="flex justify-end">
+                      <button type="button" onClick={() => setDetalle(p)} className="btn-icon" aria-label="Ver detalle">
+                        <Eye size={15} />
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
       </div>
 
       {/* Nueva compra */}
@@ -90,16 +188,24 @@ export default function PurchasesPage() {
         open={modalOpen}
         onClose={() => setModalOpen(false)}
         title="Nueva compra"
-        description="Vista previa de formulario -- todavía no guarda datos reales"
         size="lg"
         footer={
           <>
             <button type="button" onClick={() => setModalOpen(false)} className="btn-secondary">Cancelar</button>
-            <button type="submit" form="purchase-form" className="btn-primary">Registrar compra</button>
+            <button type="submit" form="purchase-form" disabled={guardando} className="btn-primary">
+              {guardando ? 'Registrando...' : 'Registrar compra'}
+            </button>
           </>
         }
       >
-        <form id="purchase-form" onSubmit={(e) => { e.preventDefault(); setModalOpen(false) }} className="flex flex-col gap-4">
+        <form id="purchase-form" onSubmit={handleSubmit} className="flex flex-col gap-4">
+          {errorForm && (
+            <div className="flex items-center gap-2 rounded-lg bg-critical/10 px-3 py-2 text-sm text-critical">
+              <TriangleAlert size={16} />
+              {errorForm}
+            </div>
+          )}
+
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div>
               <label className="field-label" htmlFor="proveedor">Proveedor</label>
@@ -132,39 +238,53 @@ export default function PurchasesPage() {
                     <th className="th">Código</th>
                     <th className="th">Descripción</th>
                     <th className="th w-24">Cantidad</th>
-                    <th className="th w-28">Precio</th>
+                    <th className="th w-28">Precio costo</th>
+                    <th className="th w-28">Precio venta</th>
                     <th className="th w-28 text-right">Subtotal</th>
                     <th className="th"></th>
                   </tr>
                 </thead>
                 <tbody>
-                  {items.map((it, i) => (
-                    <tr key={i}>
-                      <td className="td">
-                        <input className="field-input" value={it.codigo} onChange={(e) => actualizarItem(i, 'codigo', e.target.value)} placeholder="VAL025" />
-                      </td>
-                      <td className="td">
-                        <input className="field-input" value={it.descripcion} onChange={(e) => actualizarItem(i, 'descripcion', e.target.value)} placeholder="Descripción" />
-                      </td>
-                      <td className="td">
-                        <input type="number" className="field-input" value={it.cantidad} onChange={(e) => actualizarItem(i, 'cantidad', e.target.value)} placeholder="0" />
-                      </td>
-                      <td className="td">
-                        <input type="number" step="0.01" className="field-input" value={it.precioUnitario} onChange={(e) => actualizarItem(i, 'precioUnitario', e.target.value)} placeholder="0.00" />
-                      </td>
-                      <td className="td text-right tabular-nums">
-                        {formatCurrency((Number(it.cantidad) || 0) * (Number(it.precioUnitario) || 0))}
-                      </td>
-                      <td className="td">
-                        <button type="button" onClick={() => quitarFila(i)} className="btn-icon hover:bg-critical/10! hover:text-critical!" aria-label="Quitar línea">
-                          <Trash2 size={14} />
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
+                  {items.map((it, i) => {
+                    const esNuevo = esProductoNuevo(it.codigo)
+                    return (
+                      <tr key={i}>
+                        <td className="td">
+                          <input className="field-input" value={it.codigo} onChange={(e) => actualizarItem(i, 'codigo', e.target.value)} placeholder="VAL025" />
+                        </td>
+                        <td className="td">
+                          <input className="field-input" value={it.descripcion} onChange={(e) => actualizarItem(i, 'descripcion', e.target.value)} placeholder="Descripción" />
+                        </td>
+                        <td className="td">
+                          <input type="number" min="0" className="field-input" value={it.cantidad} onChange={(e) => actualizarItem(i, 'cantidad', e.target.value)} placeholder="0" />
+                        </td>
+                        <td className="td">
+                          <input type="number" step="0.01" min="0" className="field-input" value={it.precioUnitario} onChange={(e) => actualizarItem(i, 'precioUnitario', e.target.value)} placeholder="0.00" />
+                        </td>
+                        <td className="td">
+                          {esNuevo ? (
+                            <input type="number" step="0.01" min="0" className="field-input" value={it.precioVenta} onChange={(e) => actualizarItem(i, 'precioVenta', e.target.value)} placeholder="0.00" />
+                          ) : (
+                            <span className="text-xs text-ink-muted">existente</span>
+                          )}
+                        </td>
+                        <td className="td text-right tabular-nums">
+                          {formatCurrency((Number(it.cantidad) || 0) * (Number(it.precioUnitario) || 0))}
+                        </td>
+                        <td className="td">
+                          <button type="button" onClick={() => quitarFila(i)} className="btn-icon hover:bg-critical/10! hover:text-critical!" aria-label="Quitar línea">
+                            <Trash2 size={14} />
+                          </button>
+                        </td>
+                      </tr>
+                    )
+                  })}
                 </tbody>
               </table>
             </div>
+            <p className="mt-2 text-xs text-ink-muted">
+              Si el código no existe todavía en el inventario, se crea el producto -- por eso pide precio de venta.
+            </p>
           </div>
 
           <div className="flex justify-end border-t border-hairline pt-3 text-sm">
@@ -178,8 +298,8 @@ export default function PurchasesPage() {
       <Modal
         open={!!detalle}
         onClose={() => setDetalle(null)}
-        title={detalle ? `Compra a ${detalle.proveedor.nombre}` : ''}
-        description={detalle ? `${detalle.numeroDocumento} · ${formatDate(detalle.fecha)}` : ''}
+        title={detalle ? `Compra a ${detalle.proveedor?.nombre || ''}` : ''}
+        description={detalle ? `${detalle.numeroDocumento || 'Sin N° de documento'} · ${formatDate(detalle.fecha)}` : ''}
         size="lg"
       >
         {detalle && (

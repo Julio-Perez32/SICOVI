@@ -11,7 +11,7 @@ import {
   Wrench,
   X,
 } from 'lucide-react'
-import { notifications } from '../mock/notifications'
+import useUnreadAlerts from '../hooks/useUnreadAlerts'
 
 const NAV_ITEMS = [
   { to: '/', label: 'Dashboard', icon: LayoutDashboard, end: true },
@@ -24,7 +24,7 @@ const NAV_ITEMS = [
 ]
 
 function NavItems({ onNavigate }) {
-  const alertasSinLeer = notifications.filter((n) => !n.leida).length
+  const alertasSinLeer = useUnreadAlerts()
   const linkClass = ({ isActive }) =>
     `flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
       isActive ? 'bg-accent/10 text-accent' : 'text-ink-soft hover:bg-ink/5 hover:text-ink'

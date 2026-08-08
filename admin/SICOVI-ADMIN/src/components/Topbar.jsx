@@ -1,6 +1,7 @@
 import { useNavigate, useLocation, Link } from 'react-router-dom'
 import { Bell, LogOut, Menu } from 'lucide-react'
-import { notifications } from '../mock/notifications'
+import { useAuth } from '../context/AuthContext'
+import useUnreadAlerts from '../hooks/useUnreadAlerts'
 
 const TITLES = {
   '/': 'Dashboard',
@@ -16,7 +17,13 @@ const TITLES = {
 export default function Topbar({ onOpenMobileNav }) {
   const { pathname } = useLocation()
   const navigate = useNavigate()
-  const alertasSinLeer = notifications.filter((n) => !n.leida).length
+  const { user, logout } = useAuth()
+  const alertasSinLeer = useUnreadAlerts()
+
+  async function handleLogout() {
+    await logout()
+    navigate('/login')
+  }
 
   return (
     <header className="flex items-center justify-between gap-4 border-b border-hairline bg-card px-4 md:px-6 py-3.5">
@@ -37,17 +44,17 @@ export default function Topbar({ onOpenMobileNav }) {
 
         <div className="mx-1 hidden sm:flex items-center gap-2.5 rounded-lg px-2 py-1">
           <span className="grid h-8 w-8 place-items-center rounded-full bg-accent/10 text-sm font-semibold text-accent">
-            A
+            {user?.nombre?.charAt(0) || 'A'}
           </span>
           <div className="leading-tight text-left">
-            <p className="text-sm font-medium text-ink">Administrador SICOVI</p>
-            <p className="text-xs text-ink-muted">admin@sicovi.com</p>
+            <p className="text-sm font-medium text-ink">{user?.nombre}</p>
+            <p className="text-xs text-ink-muted">{user?.email}</p>
           </div>
         </div>
 
         <button
           type="button"
-          onClick={() => navigate('/login')}
+          onClick={handleLogout}
           className="btn-icon"
           aria-label="Cerrar sesión"
           title="Cerrar sesión"

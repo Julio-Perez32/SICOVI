@@ -225,6 +225,34 @@ dashboardController.getSalesByEmployee = async (req, res) => {
   }
 };
 
+// GET /api/dashboard/sales-by-payment-method (admin)
+dashboardController.getSalesByPaymentMethod = async (req, res) => {
+  try {
+    const datos = await Sale.aggregate([
+      { $match: { anulada: false } },
+      {
+        $group: {
+          _id: "$metodoPago",
+          cantidadVentas: { $sum: 1 },
+          totalVendido: { $sum: "$total" },
+        },
+      },
+      { $sort: { totalVendido: -1 } },
+    ]);
+
+    const ETIQUETAS = { efectivo: "Efectivo", tarjeta: "Tarjeta", transferencia: "Transferencia", otro: "Otro" };
+    const metodos = datos.map((d) => ({
+      metodo: ETIQUETAS[d._id] || d._id,
+      cantidadVentas: d.cantidadVentas,
+      totalVendido: d.totalVendido,
+    }));
+
+    res.status(200).json({ success: true, metodos });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
 // GET /api/dashboard/recent-activity?limit=20 (admin)
 dashboardController.getRecentActivity = async (req, res) => {
   try {

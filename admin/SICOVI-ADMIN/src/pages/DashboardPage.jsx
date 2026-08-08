@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react'
 import {
   ResponsiveContainer,
   AreaChart,
@@ -19,20 +20,15 @@ import {
   BellRing,
   ArrowUpRight,
   ArrowDownRight,
+  TriangleAlert,
 } from 'lucide-react'
 import StatCard from '../components/StatCard'
 import Badge from '../components/Badge'
 import ChartTooltip from '../components/ChartTooltip'
 import PageHeader from '../components/PageHeader'
+import EmptyState from '../components/EmptyState'
 import { formatCurrency, formatDateTime } from '../lib/format'
-import {
-  summary,
-  salesTimeseries,
-  topProducts,
-  marginByCategory,
-  salesByPaymentMethod,
-  recentActivity,
-} from '../mock/dashboard'
+import { apiFetch } from '../lib/api'
 
 const dowFormatter = new Intl.DateTimeFormat('es-SV', { weekday: 'short' })
 
@@ -49,6 +45,65 @@ function SectionCard({ title, description, children, className = '' }) {
 }
 
 export default function DashboardPage() {
+  const [cargando, setCargando] = useState(true)
+  const [error, setError] = useState('')
+  const [summary, setSummary] = useState(null)
+  const [salesTimeseries, setSalesTimeseries] = useState([])
+  const [topProducts, setTopProducts] = useState([])
+  const [marginByCategory, setMarginByCategory] = useState([])
+  const [salesByPaymentMethod, setSalesByPaymentMethod] = useState([])
+  const [recentActivity, setRecentActivity] = useState([])
+
+  useEffect(() => {
+    cargarDashboard()
+  }, [])
+
+  async function cargarDashboard() {
+    setCargando(true)
+    setError('')
+    try {
+      const [resumen, serie, top, margen, metodos, actividad] = await Promise.all([
+        apiFetch('/dashboard/summary'),
+        apiFetch('/dashboard/sales-timeseries?range=7d'),
+        apiFetch('/dashboard/top-products?limit=5'),
+        apiFetch('/dashboard/margin-by-category'),
+        apiFetch('/dashboard/sales-by-payment-method'),
+        apiFetch('/dashboard/recent-activity?limit=10'),
+      ])
+      setSummary(resumen.resumen)
+      setSalesTimeseries(serie.serie)
+      setTopProducts(top.productos)
+      setMarginByCategory(margen.categorias)
+      setSalesByPaymentMethod(metodos.metodos)
+      setRecentActivity(actividad.movimientos)
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setCargando(false)
+    }
+  }
+
+  if (cargando) {
+    return (
+      <div>
+        <PageHeader title="Dashboard" description="Resumen general del inventario y las ventas del taller" />
+        <EmptyState title="Cargando dashboard..." />
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div>
+        <PageHeader title="Dashboard" description="Resumen general del inventario y las ventas del taller" />
+        <div className="flex items-center gap-2 rounded-lg bg-critical/10 px-3 py-2 text-sm text-critical">
+          <TriangleAlert size={16} />
+          {error}
+        </div>
+      </div>
+    )
+  }
+
   const timeseriesData = salesTimeseries.map((d) => ({
     ...d,
     dia: dowFormatter.format(new Date(`${d.fecha}T00:00:00`)),
@@ -59,7 +114,7 @@ export default function DashboardPage() {
     .slice(0, 5)
     .reverse() // recharts vertical bar dibuja de abajo hacia arriba
 
-  const maxMetodo = Math.max(...salesByPaymentMethod.map((m) => m.totalVendido))
+  const maxMetodo = Math.max(1, ...salesByPaymentMethod.map((m) => m.totalVendido))
 
   return (
     <div>
@@ -160,83 +215,91 @@ export default function DashboardPage() {
           description="Por unidades vendidas"
           className="xl:col-span-2"
         >
-          <div className="h-64 w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart
-                data={topProductsData}
-                layout="vertical"
-                margin={{ top: 0, right: 16, left: 0, bottom: 0 }}
-                barCategoryGap={10}
-              >
-                <CartesianGrid horizontal={false} stroke="var(--hairline)" />
-                <XAxis type="number" hide />
-                <YAxis
-                  type="category"
-                  dataKey="codigo"
-                  tickLine={false}
-                  axisLine={false}
-                  width={70}
-                  tick={{ fill: 'var(--ink-soft)', fontSize: 12 }}
-                />
-                <Tooltip
-                  content={
-                    <ChartTooltip
-                      formatter={(v, entry) => `${v} u. · ${formatCurrency(entry.payload.totalVendido)}`}
-                    />
-                  }
-                  cursor={{ fill: 'var(--ink)', fillOpacity: 0.04 }}
-                />
-                <Bar
-                  dataKey="unidadesVendidas"
-                  name="Unidades"
-                  fill="var(--series-1)"
-                  radius={[4, 4, 4, 4]}
-                  barSize={18}
-                />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
+          {topProductsData.length === 0 ? (
+            <EmptyState title="Todavía sin ventas" description="Aquí aparecerán los productos más vendidos" />
+          ) : (
+            <div className="h-64 w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart
+                  data={topProductsData}
+                  layout="vertical"
+                  margin={{ top: 0, right: 16, left: 0, bottom: 0 }}
+                  barCategoryGap={10}
+                >
+                  <CartesianGrid horizontal={false} stroke="var(--hairline)" />
+                  <XAxis type="number" hide />
+                  <YAxis
+                    type="category"
+                    dataKey="codigo"
+                    tickLine={false}
+                    axisLine={false}
+                    width={70}
+                    tick={{ fill: 'var(--ink-soft)', fontSize: 12 }}
+                  />
+                  <Tooltip
+                    content={
+                      <ChartTooltip
+                        formatter={(v, entry) => `${v} u. · ${formatCurrency(entry.payload.totalVendido)}`}
+                      />
+                    }
+                    cursor={{ fill: 'var(--ink)', fillOpacity: 0.04 }}
+                  />
+                  <Bar
+                    dataKey="unidadesVendidas"
+                    name="Unidades"
+                    fill="var(--series-1)"
+                    radius={[4, 4, 4, 4]}
+                    barSize={18}
+                  />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          )}
         </SectionCard>
       </div>
 
-      {/* Margen por categoría + ranking vendedores */}
+      {/* Margen por categoría + ventas por método de pago */}
       <div className="mt-4 grid grid-cols-1 gap-4 xl:grid-cols-5">
         <SectionCard
           title="Costo vs. venta por categoría"
           description="Valor de inventario a precio de costo y de venta"
           className="xl:col-span-3"
         >
-          <div className="h-64 w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={marginByCategory} margin={{ top: 8, right: 8, left: 8, bottom: 0 }} barGap={2}>
-                <CartesianGrid vertical={false} stroke="var(--hairline)" />
-                <XAxis
-                  dataKey="categoria"
-                  tickLine={false}
-                  axisLine={{ stroke: 'var(--line)' }}
-                  tick={{ fill: 'var(--ink-muted)', fontSize: 12 }}
-                />
-                <YAxis
-                  tickLine={false}
-                  axisLine={false}
-                  width={44}
-                  tick={{ fill: 'var(--ink-muted)', fontSize: 12 }}
-                  tickFormatter={(v) => `$${v}`}
-                />
-                <Tooltip content={<ChartTooltip formatter={(v) => formatCurrency(v)} />} cursor={{ fill: 'var(--ink)', fillOpacity: 0.04 }} />
-                <Legend
-                  verticalAlign="top"
-                  align="right"
-                  height={28}
-                  iconType="circle"
-                  iconSize={8}
-                  wrapperStyle={{ fontSize: 12, color: 'var(--ink-soft)' }}
-                />
-                <Bar dataKey="valorCosto" name="Costo" fill="var(--series-1)" radius={[4, 4, 0, 0]} maxBarSize={22} />
-                <Bar dataKey="valorVenta" name="Venta" fill="var(--series-2)" radius={[4, 4, 0, 0]} maxBarSize={22} />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
+          {marginByCategory.length === 0 ? (
+            <EmptyState title="Sin productos todavía" />
+          ) : (
+            <div className="h-64 w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={marginByCategory} margin={{ top: 8, right: 8, left: 8, bottom: 0 }} barGap={2}>
+                  <CartesianGrid vertical={false} stroke="var(--hairline)" />
+                  <XAxis
+                    dataKey="categoria"
+                    tickLine={false}
+                    axisLine={{ stroke: 'var(--line)' }}
+                    tick={{ fill: 'var(--ink-muted)', fontSize: 12 }}
+                  />
+                  <YAxis
+                    tickLine={false}
+                    axisLine={false}
+                    width={44}
+                    tick={{ fill: 'var(--ink-muted)', fontSize: 12 }}
+                    tickFormatter={(v) => `$${v}`}
+                  />
+                  <Tooltip content={<ChartTooltip formatter={(v) => formatCurrency(v)} />} cursor={{ fill: 'var(--ink)', fillOpacity: 0.04 }} />
+                  <Legend
+                    verticalAlign="top"
+                    align="right"
+                    height={28}
+                    iconType="circle"
+                    iconSize={8}
+                    wrapperStyle={{ fontSize: 12, color: 'var(--ink-soft)' }}
+                  />
+                  <Bar dataKey="valorCosto" name="Costo" fill="var(--series-1)" radius={[4, 4, 0, 0]} maxBarSize={22} />
+                  <Bar dataKey="valorVenta" name="Venta" fill="var(--series-2)" radius={[4, 4, 0, 0]} maxBarSize={22} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          )}
         </SectionCard>
 
         <SectionCard
@@ -244,54 +307,62 @@ export default function DashboardPage() {
           description="Total vendido (no anuladas)"
           className="xl:col-span-2"
         >
-          <div className="flex flex-col gap-4 py-1">
-            {salesByPaymentMethod.map((m) => (
-              <div key={m.metodo}>
-                <div className="mb-1.5 flex items-baseline justify-between text-sm">
-                  <span className="font-medium text-ink">{m.metodo}</span>
-                  <span className="text-ink-soft">{formatCurrency(m.totalVendido)}</span>
+          {salesByPaymentMethod.length === 0 ? (
+            <EmptyState title="Todavía sin ventas" />
+          ) : (
+            <div className="flex flex-col gap-4 py-1">
+              {salesByPaymentMethod.map((m) => (
+                <div key={m.metodo}>
+                  <div className="mb-1.5 flex items-baseline justify-between text-sm">
+                    <span className="font-medium text-ink">{m.metodo}</span>
+                    <span className="text-ink-soft">{formatCurrency(m.totalVendido)}</span>
+                  </div>
+                  <div className="h-2 w-full overflow-hidden rounded-full bg-[color-mix(in_srgb,var(--series-1)_15%,transparent)]">
+                    <div
+                      className="h-full rounded-full bg-series-1"
+                      style={{ width: `${Math.max(6, (m.totalVendido / maxMetodo) * 100)}%` }}
+                    />
+                  </div>
+                  <p className="mt-1 text-xs text-ink-muted">{m.cantidadVentas} ventas</p>
                 </div>
-                <div className="h-2 w-full overflow-hidden rounded-full bg-[color-mix(in_srgb,var(--series-1)_15%,transparent)]">
-                  <div
-                    className="h-full rounded-full bg-series-1"
-                    style={{ width: `${Math.max(6, (m.totalVendido / maxMetodo) * 100)}%` }}
-                  />
-                </div>
-                <p className="mt-1 text-xs text-ink-muted">{m.cantidadVentas} ventas</p>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </SectionCard>
       </div>
 
       {/* Actividad reciente */}
       <div className="mt-4">
         <SectionCard title="Actividad reciente" description="Últimos movimientos de inventario (kardex)">
-          <ul className="divide-y divide-hairline">
-            {recentActivity.map((m) => {
-              const esEntrada = m.tipo === 'entrada'
-              return (
-                <li key={m._id} className="flex items-center gap-3 py-3">
-                  <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-ink/5 text-ink-soft">
-                    {esEntrada ? <ArrowUpRight size={16} /> : <ArrowDownRight size={16} />}
-                  </span>
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm text-ink">
-                      <span className="font-medium">{m.producto.nombre}</span>{' '}
-                      <span className="text-ink-muted">({m.producto.codigo})</span>
-                    </p>
-                    <p className="text-xs text-ink-muted">
-                      {m.motivo} · {m.usuario.nombre} · {formatDateTime(m.createdAt)}
-                    </p>
-                  </div>
-                  <Badge tone={esEntrada ? 'good' : 'neutral'}>
-                    {esEntrada ? '+' : ''}
-                    {m.cantidad} · stock {m.stockResultante}
-                  </Badge>
-                </li>
-              )
-            })}
-          </ul>
+          {recentActivity.length === 0 ? (
+            <EmptyState title="Todavía sin movimientos" description="Aparecen aquí en cuanto haya compras o ventas" />
+          ) : (
+            <ul className="divide-y divide-hairline">
+              {recentActivity.map((m) => {
+                const esEntrada = m.tipo === 'entrada'
+                return (
+                  <li key={m._id} className="flex items-center gap-3 py-3">
+                    <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-ink/5 text-ink-soft">
+                      {esEntrada ? <ArrowUpRight size={16} /> : <ArrowDownRight size={16} />}
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm text-ink">
+                        <span className="font-medium">{m.producto?.nombre || 'Producto eliminado'}</span>{' '}
+                        <span className="text-ink-muted">({m.producto?.codigo || '—'})</span>
+                      </p>
+                      <p className="text-xs text-ink-muted">
+                        {m.motivo} · {m.usuario?.nombre || '—'} · {formatDateTime(m.createdAt)}
+                      </p>
+                    </div>
+                    <Badge tone={esEntrada ? 'good' : 'neutral'}>
+                      {esEntrada ? '+' : ''}
+                      {m.cantidad} · stock {m.stockResultante}
+                    </Badge>
+                  </li>
+                )
+              })}
+            </ul>
+          )}
         </SectionCard>
       </div>
     </div>

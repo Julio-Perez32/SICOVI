@@ -1,32 +1,82 @@
-import { useState } from 'react'
-import { Plus, Pencil, Trash2 } from 'lucide-react'
+import { useEffect, useState } from 'react'
+import { Plus, Pencil, Trash2, TriangleAlert } from 'lucide-react'
 import PageHeader from '../components/PageHeader'
 import Badge from '../components/Badge'
 import Modal from '../components/Modal'
-import { categories } from '../mock/categories'
-import { products } from '../mock/products'
+import EmptyState from '../components/EmptyState'
+import { apiFetch } from '../lib/api'
 
 const emptyForm = { nombre: '', descripcion: '' }
 
 export default function CategoriesPage() {
+  const [categorias, setCategorias] = useState([])
+  const [cargando, setCargando] = useState(true)
+  const [errorLista, setErrorLista] = useState('')
+
   const [modalOpen, setModalOpen] = useState(false)
   const [form, setForm] = useState(emptyForm)
   const [editId, setEditId] = useState(null)
+  const [errorForm, setErrorForm] = useState('')
+  const [guardando, setGuardando] = useState(false)
+
+  useEffect(() => {
+    cargarCategorias()
+  }, [])
+
+  async function cargarCategorias() {
+    setCargando(true)
+    setErrorLista('')
+    try {
+      const data = await apiFetch('/categories')
+      setCategorias(data.categorias)
+    } catch (err) {
+      setErrorLista(err.message)
+    } finally {
+      setCargando(false)
+    }
+  }
 
   function abrirNueva() {
     setEditId(null)
     setForm(emptyForm)
+    setErrorForm('')
     setModalOpen(true)
   }
 
   function abrirEditar(categoria) {
     setEditId(categoria._id)
     setForm({ nombre: categoria.nombre, descripcion: categoria.descripcion || '' })
+    setErrorForm('')
     setModalOpen(true)
   }
 
-  function contarProductos(categoriaId) {
-    return products.filter((p) => p.categoria?._id === categoriaId).length
+  async function handleSubmit(e) {
+    e.preventDefault()
+    setErrorForm('')
+    setGuardando(true)
+    try {
+      if (editId) {
+        await apiFetch(`/categories/${editId}`, { method: 'PUT', body: form })
+      } else {
+        await apiFetch('/categories', { method: 'POST', body: form })
+      }
+      setModalOpen(false)
+      await cargarCategorias()
+    } catch (err) {
+      setErrorForm(err.message)
+    } finally {
+      setGuardando(false)
+    }
+  }
+
+  async function handleDesactivar(categoria) {
+    if (!confirm(`¿Desactivar "${categoria.nombre}"?`)) return
+    try {
+      await apiFetch(`/categories/${categoria._id}`, { method: 'DELETE' })
+      await cargarCategorias()
+    } catch (err) {
+      alert(err.message)
+    }
   }
 
   return (
@@ -42,58 +92,79 @@ export default function CategoriesPage() {
         }
       />
 
+      {errorLista && (
+        <div className="mb-4 flex items-center gap-2 rounded-lg bg-critical/10 px-3 py-2 text-sm text-critical">
+          <TriangleAlert size={16} />
+          {errorLista}
+        </div>
+      )}
+
       <div className="table-shell">
-        <table className="table-base">
-          <thead>
-            <tr>
-              <th className="th">Nombre</th>
-              <th className="th">Descripción</th>
-              <th className="th text-right">Productos</th>
-              <th className="th">Estado</th>
-              <th className="th"></th>
-            </tr>
-          </thead>
-          <tbody>
-            {categories.map((c) => (
-              <tr key={c._id} className="hover:bg-ink/[0.02]">
-                <td className="td font-medium text-ink">{c.nombre}</td>
-                <td className="td text-ink-soft">{c.descripcion || '—'}</td>
-                <td className="td text-right tabular-nums">{contarProductos(c._id)}</td>
-                <td className="td"><Badge tone={c.activo ? 'good' : 'neutral'}>{c.activo ? 'Activa' : 'Inactiva'}</Badge></td>
-                <td className="td">
-                  <div className="flex items-center justify-end gap-1">
-                    <button type="button" onClick={() => abrirEditar(c)} className="btn-icon" aria-label="Editar">
-                      <Pencil size={15} />
-                    </button>
-                    <button type="button" className="btn-icon hover:bg-critical/10! hover:text-critical!" aria-label="Desactivar">
-                      <Trash2 size={15} />
-                    </button>
-                  </div>
-                </td>
+        {cargando ? (
+          <EmptyState title="Cargando categorías..." />
+        ) : categorias.length === 0 ? (
+          <EmptyState title="Sin categorías" description="Crea la primera para empezar a clasificar productos" />
+        ) : (
+          <table className="table-base">
+            <thead>
+              <tr>
+                <th className="th">Nombre</th>
+                <th className="th">Descripción</th>
+                <th className="th">Estado</th>
+                <th className="th"></th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {categorias.map((c) => (
+                <tr key={c._id} className="hover:bg-ink/[0.02]">
+                  <td className="td font-medium text-ink">{c.nombre}</td>
+                  <td className="td text-ink-soft">{c.descripcion || '—'}</td>
+                  <td className="td"><Badge tone={c.activo ? 'good' : 'neutral'}>{c.activo ? 'Activa' : 'Inactiva'}</Badge></td>
+                  <td className="td">
+                    <div className="flex items-center justify-end gap-1">
+                      <button type="button" onClick={() => abrirEditar(c)} className="btn-icon" aria-label="Editar">
+                        <Pencil size={15} />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleDesactivar(c)}
+                        className="btn-icon hover:bg-critical/10! hover:text-critical!"
+                        aria-label="Desactivar"
+                      >
+                        <Trash2 size={15} />
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
       </div>
 
       <Modal
         open={modalOpen}
         onClose={() => setModalOpen(false)}
         title={editId ? 'Editar categoría' : 'Nueva categoría'}
-        description="Vista previa de formulario -- todavía no guarda datos reales"
         footer={
           <>
             <button type="button" onClick={() => setModalOpen(false)} className="btn-secondary">Cancelar</button>
-            <button type="submit" form="category-form" className="btn-primary">
-              {editId ? 'Guardar cambios' : 'Crear categoría'}
+            <button type="submit" form="category-form" disabled={guardando} className="btn-primary">
+              {guardando ? 'Guardando...' : editId ? 'Guardar cambios' : 'Crear categoría'}
             </button>
           </>
         }
       >
-        <form id="category-form" onSubmit={(e) => { e.preventDefault(); setModalOpen(false) }} className="flex flex-col gap-4">
+        <form id="category-form" onSubmit={handleSubmit} className="flex flex-col gap-4">
+          {errorForm && (
+            <div className="flex items-center gap-2 rounded-lg bg-critical/10 px-3 py-2 text-sm text-critical">
+              <TriangleAlert size={16} />
+              {errorForm}
+            </div>
+          )}
           <div>
             <label className="field-label" htmlFor="nombre">Nombre</label>
-            <input id="nombre" className="field-input" value={form.nombre} onChange={(e) => setForm({ ...form, nombre: e.target.value })} placeholder="Lubricantes" />
+            <input id="nombre" className="field-input" value={form.nombre} onChange={(e) => setForm({ ...form, nombre: e.target.value })} placeholder="Lubricantes" required />
           </div>
           <div>
             <label className="field-label" htmlFor="descripcion">Descripción</label>

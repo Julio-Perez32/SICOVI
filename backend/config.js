@@ -29,6 +29,13 @@ const config = {
     password: process.env.ADMIN_SEED_PASSWORD,
   },
 
+  employeeSeed: {
+    nombre: process.env.EMPLOYEE_SEED_NAME || "Empleado",
+    email: process.env.EMPLOYEE_SEED_EMAIL,
+    username: process.env.EMPLOYEE_SEED_USERNAME || "empleado",
+    password: process.env.EMPLOYEE_SEED_PASSWORD,
+  },
+
   defaultStockMinimo: Number(process.env.DEFAULT_STOCK_MINIMO) || 5,
 };
 

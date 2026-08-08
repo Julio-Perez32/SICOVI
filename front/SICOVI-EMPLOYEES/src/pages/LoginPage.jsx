@@ -1,16 +1,28 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Wrench, Mail, Lock, ArrowRight } from 'lucide-react'
+import { Wrench, User, Lock, ArrowRight, TriangleAlert } from 'lucide-react'
+import { useAuth } from '../context/AuthContext'
 
-// Todavía sin conectar al backend: el submit solo navega a "Vender".
 export default function LoginPage() {
   const navigate = useNavigate()
-  const [email, setEmail] = useState('empleado@sicovi.com')
+  const { login } = useAuth()
+  const [username, setUsername] = useState('empleado')
   const [password, setPassword] = useState('')
+  const [error, setError] = useState('')
+  const [enviando, setEnviando] = useState(false)
 
-  function handleSubmit(e) {
+  async function handleSubmit(e) {
     e.preventDefault()
-    navigate('/')
+    setError('')
+    setEnviando(true)
+    try {
+      await login(username, password)
+      navigate('/')
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setEnviando(false)
+    }
   }
 
   return (
@@ -30,16 +42,25 @@ export default function LoginPage() {
           <h2 className="mb-1 text-base font-semibold text-ink">Iniciar sesión</h2>
           <p className="mb-5 text-sm text-ink-soft">Panel de empleados</p>
 
-          <label className="field-label" htmlFor="email">Correo</label>
+          {error && (
+            <div className="mb-4 flex items-start gap-2 rounded-lg bg-critical/10 px-3 py-2 text-sm text-critical">
+              <TriangleAlert size={16} className="mt-0.5 shrink-0" />
+              {error}
+            </div>
+          )}
+
+          <label className="field-label" htmlFor="username">Usuario</label>
           <div className="relative mb-4">
-            <Mail size={16} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-ink-muted" />
+            <User size={16} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-ink-muted" />
             <input
-              id="email"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              id="username"
+              type="text"
+              autoCapitalize="none"
+              autoCorrect="off"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
               className="field-input pl-9"
-              placeholder="empleado@sicovi.com"
+              placeholder="empleado"
             />
           </div>
 
@@ -56,15 +77,11 @@ export default function LoginPage() {
             />
           </div>
 
-          <button type="submit" className="btn-primary w-full">
-            Entrar
-            <ArrowRight size={16} />
+          <button type="submit" disabled={enviando} className="btn-primary w-full">
+            {enviando ? 'Entrando...' : 'Entrar'}
+            {!enviando && <ArrowRight size={16} />}
           </button>
         </form>
-
-        <p className="mt-6 text-center text-xs text-ink-muted">
-          Vista previa de interfaz -- todavía no conectada al backend
-        </p>
       </div>
     </div>
   )

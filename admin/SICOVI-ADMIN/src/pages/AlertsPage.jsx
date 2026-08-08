@@ -1,16 +1,44 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { PackageX, TriangleAlert, Check } from 'lucide-react'
 import PageHeader from '../components/PageHeader'
 import Badge from '../components/Badge'
 import EmptyState from '../components/EmptyState'
 import { formatDateTime } from '../lib/format'
-import { notifications as initialNotifications } from '../mock/notifications'
+import { apiFetch } from '../lib/api'
+
+const INTERVALO_MS = 20000 // se refresca sola cada 20s, sin recargar la página
 
 export default function AlertsPage() {
-  const [notificaciones, setNotificaciones] = useState(initialNotifications)
+  const [notificaciones, setNotificaciones] = useState([])
+  const [cargando, setCargando] = useState(true)
+  const [errorLista, setErrorLista] = useState('')
 
-  function marcarLeida(id) {
+  useEffect(() => {
+    cargarNotificaciones()
+    const idIntervalo = setInterval(() => cargarNotificaciones({ silencioso: true }), INTERVALO_MS)
+    return () => clearInterval(idIntervalo)
+  }, [])
+
+  async function cargarNotificaciones({ silencioso = false } = {}) {
+    if (!silencioso) setCargando(true)
+    setErrorLista('')
+    try {
+      const data = await apiFetch('/notifications')
+      setNotificaciones(data.notificaciones)
+    } catch (err) {
+      if (!silencioso) setErrorLista(err.message)
+    } finally {
+      if (!silencioso) setCargando(false)
+    }
+  }
+
+  async function marcarLeida(id) {
     setNotificaciones((prev) => prev.map((n) => (n._id === id ? { ...n, leida: true } : n)))
+    try {
+      await apiFetch(`/notifications/${id}/read`, { method: 'PATCH' })
+    } catch {
+      cargarNotificaciones() // si falló, volvemos a traer el estado real
+    }
   }
 
   const sinLeer = notificaciones.filter((n) => !n.leida)
@@ -23,7 +51,18 @@ export default function AlertsPage() {
         description="Avisos automáticos cuando un producto queda bajo o sin stock"
       />
 
-      {notificaciones.length === 0 ? (
+      {errorLista && (
+        <div className="mb-4 flex items-center gap-2 rounded-lg bg-critical/10 px-3 py-2 text-sm text-critical">
+          <TriangleAlert size={16} />
+          {errorLista}
+        </div>
+      )}
+
+      {cargando ? (
+        <div className="table-shell">
+          <EmptyState title="Cargando alertas..." />
+        </div>
+      ) : notificaciones.length === 0 ? (
         <div className="table-shell">
           <EmptyState icon={Check} title="Sin alertas" description="No hay productos con stock bajo por ahora" />
         </div>

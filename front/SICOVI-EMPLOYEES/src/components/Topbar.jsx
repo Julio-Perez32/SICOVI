@@ -1,6 +1,6 @@
 import { useNavigate, useLocation } from 'react-router-dom'
 import { LogOut, Menu } from 'lucide-react'
-import { currentEmployee } from '../mock/session'
+import { useAuth } from '../context/AuthContext'
 
 const TITLES = {
   '/': 'Vender',
@@ -10,7 +10,12 @@ const TITLES = {
 export default function Topbar({ onOpenMobileNav }) {
   const { pathname } = useLocation()
   const navigate = useNavigate()
-  const inicial = currentEmployee.nombre.charAt(0)
+  const { user, logout } = useAuth()
+
+  async function handleLogout() {
+    await logout()
+    navigate('/login')
+  }
 
   return (
     <header className="flex items-center justify-between gap-4 border-b border-hairline bg-card px-4 md:px-6 py-3.5">
@@ -24,17 +29,17 @@ export default function Topbar({ onOpenMobileNav }) {
       <div className="flex items-center gap-2">
         <div className="mx-1 hidden sm:flex items-center gap-2.5 rounded-lg px-2 py-1">
           <span className="grid h-8 w-8 place-items-center rounded-full bg-accent/10 text-sm font-semibold text-accent">
-            {inicial}
+            {user?.nombre?.charAt(0) || 'E'}
           </span>
           <div className="leading-tight text-left">
-            <p className="text-sm font-medium text-ink">{currentEmployee.nombre}</p>
-            <p className="text-xs text-ink-muted">{currentEmployee.email}</p>
+            <p className="text-sm font-medium text-ink">{user?.nombre}</p>
+            <p className="text-xs text-ink-muted">{user?.email}</p>
           </div>
         </div>
 
         <button
           type="button"
-          onClick={() => navigate('/login')}
+          onClick={handleLogout}
           className="btn-icon"
           aria-label="Cerrar sesión"
           title="Cerrar sesión"

@@ -15,6 +15,17 @@ const userSchema = new mongoose.Schema(
       lowercase: true,
       trim: true,
     },
+    // Credencial de login alternativa al correo -- pensada para la cuenta
+    // compartida de ventas (más fácil de escribir que un correo). Sparse
+    // para que los usuarios sin username (ej. el admin) no choquen entre
+    // sí en el índice único.
+    username: {
+      type: String,
+      unique: true,
+      sparse: true,
+      lowercase: true,
+      trim: true,
+    },
     password: {
       type: String,
       required: [true, "La contraseña es obligatoria"],

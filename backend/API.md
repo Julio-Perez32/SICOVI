@@ -11,21 +11,28 @@ Roles: `admin` y `empleado`. Donde no se diga lo contrario, cualquier usuario
 logueado puede usar el endpoint.
 
 Antes de usar la API por primera vez: `npm run seed:admin` (lee
-`ADMIN_SEED_EMAIL` / `ADMIN_SEED_PASSWORD` del `.env`).
+`ADMIN_SEED_EMAIL` / `ADMIN_SEED_PASSWORD` del `.env`) y `npm run seed:empleado`
+(lee `EMPLOYEE_SEED_EMAIL` / `EMPLOYEE_SEED_PASSWORD`) -- crea la única
+cuenta compartida de ventas, no hay cuentas individuales por empleado.
 
 ---
 
 ## Auth — `/api/auth`
 
+La cuenta de ventas inicia sesión con `username` (más fácil de escribir en
+una terminal compartida); el admin sigue usando `email`. El admin puede
+cambiar el `username` de la cuenta de ventas con `PATCH /employees/:id`.
+
 | Método | Ruta | Rol | Body |
 |---|---|---|---|
-| POST | `/login` | público | `{ email, password }` |
+| POST | `/login` | público | `{ email, password }` **o** `{ username, password }` |
 | POST | `/logout` | logueado | - |
 | GET | `/me` | logueado | - |
 | PATCH | `/me/password` | logueado | `{ passwordActual, passwordNueva }` |
-| POST | `/employees` | admin | `{ nombre, email, password, telefono?, rol? }` |
+| POST | `/employees` | admin | `{ nombre, email, password, username?, telefono?, rol? }` |
 | GET | `/employees` | admin | query: `?rol=&activo=` |
-| PATCH | `/employees/:id` | admin | `{ nombre?, telefono?, rol?, activo? }` |
+| PATCH | `/employees/:id` | admin | `{ nombre?, telefono?, rol?, activo?, username? }` |
+| PATCH | `/employees/:id/password` | admin | `{ passwordNueva }` — resetea la contraseña sin pedir la actual |
 
 ## Products — `/api/products`
 
@@ -80,6 +87,7 @@ Si no hay stock suficiente responde `400`.
 | `GET /top-products?limit=10` | productos más vendidos por unidades |
 | `GET /margin-by-category` | valor de inventario y margen agrupado por categoría |
 | `GET /sales-by-employee` | ranking de ventas por empleado |
+| `GET /sales-by-payment-method` | ventas agrupadas por método de pago (efectivo/tarjeta/transferencia/otro) |
 | `GET /recent-activity?limit=20` | últimos movimientos de stock (kardex) |
 
 ## Notifications — `/api/notifications` (todo admin)

@@ -1,10 +1,27 @@
 import { useState } from 'react'
-import { Outlet } from 'react-router-dom'
+import { Navigate, Outlet } from 'react-router-dom'
+import { Wrench } from 'lucide-react'
 import Sidebar from '../components/Sidebar'
 import Topbar from '../components/Topbar'
+import { useAuth } from '../context/AuthContext'
 
 export default function AdminLayout() {
   const [mobileNavOpen, setMobileNavOpen] = useState(false)
+  const { user, cargando } = useAuth()
+
+  if (cargando) {
+    return (
+      <div className="grid h-screen place-items-center bg-page">
+        <span className="flex items-center gap-2 text-sm text-ink-soft">
+          <Wrench size={16} className="animate-pulse" />
+          Cargando SICOVI...
+        </span>
+      </div>
+    )
+  }
+
+  if (!user) return <Navigate to="/login" replace />
+  if (user.rol !== 'admin') return <Navigate to="/login" replace />
 
   return (
     <div className="flex h-screen bg-page">

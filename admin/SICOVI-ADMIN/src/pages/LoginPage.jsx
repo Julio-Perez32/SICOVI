@@ -1,16 +1,32 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Wrench, Mail, Lock, ArrowRight } from 'lucide-react'
+import { Wrench, Mail, Lock, ArrowRight, TriangleAlert } from 'lucide-react'
+import { useAuth } from '../context/AuthContext'
 
-// Todavía sin conectar al backend: el submit solo navega al dashboard.
 export default function LoginPage() {
   const navigate = useNavigate()
+  const { login } = useAuth()
   const [email, setEmail] = useState('admin@sicovi.com')
   const [password, setPassword] = useState('')
+  const [error, setError] = useState('')
+  const [enviando, setEnviando] = useState(false)
 
-  function handleSubmit(e) {
+  async function handleSubmit(e) {
     e.preventDefault()
-    navigate('/')
+    setError('')
+    setEnviando(true)
+    try {
+      const user = await login(email, password)
+      if (user.rol !== 'admin') {
+        setError('Esta cuenta no tiene acceso al panel de administrador')
+        return
+      }
+      navigate('/')
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setEnviando(false)
+    }
   }
 
   return (
@@ -29,6 +45,13 @@ export default function LoginPage() {
         <form onSubmit={handleSubmit} className="rounded-2xl bg-card p-6 ring-1 ring-hairline">
           <h2 className="mb-1 text-base font-semibold text-ink">Iniciar sesión</h2>
           <p className="mb-5 text-sm text-ink-soft">Panel de administrador</p>
+
+          {error && (
+            <div className="mb-4 flex items-start gap-2 rounded-lg bg-critical/10 px-3 py-2 text-sm text-critical">
+              <TriangleAlert size={16} className="mt-0.5 shrink-0" />
+              {error}
+            </div>
+          )}
 
           <label className="field-label" htmlFor="email">Correo</label>
           <div className="relative mb-4">
@@ -56,15 +79,11 @@ export default function LoginPage() {
             />
           </div>
 
-          <button type="submit" className="btn-primary w-full">
-            Entrar
-            <ArrowRight size={16} />
+          <button type="submit" disabled={enviando} className="btn-primary w-full">
+            {enviando ? 'Entrando...' : 'Entrar'}
+            {!enviando && <ArrowRight size={16} />}
           </button>
         </form>
-
-        <p className="mt-6 text-center text-xs text-ink-muted">
-          Vista previa de interfaz -- todavía no conectada al backend
-        </p>
       </div>
     </div>
   )
