@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react'
-import { Eye, Ban, TriangleAlert } from 'lucide-react'
+import { Eye, Ban } from 'lucide-react'
 import PageHeader from '../components/PageHeader'
 import Badge from '../components/Badge'
 import Modal from '../components/Modal'
 import EmptyState from '../components/EmptyState'
+import Aviso from '../components/Aviso'
 import { formatCurrency, formatDateTime } from '../lib/format'
 import { apiFetch } from '../lib/api'
 
@@ -39,7 +40,7 @@ export default function SalesPage() {
       await apiFetch(`/sales/${venta._id}/void`, { method: 'PATCH', body: { motivo } })
       await cargarVentas()
     } catch (err) {
-      alert(err.message)
+      setErrorLista(err.message)
     }
   }
 
@@ -50,12 +51,7 @@ export default function SalesPage() {
         description="Todas las ventas registradas desde la terminal de empleados"
       />
 
-      {errorLista && (
-        <div className="mb-4 flex items-center gap-2 rounded-lg bg-critical/10 px-3 py-2 text-sm text-critical">
-          <TriangleAlert size={16} />
-          {errorLista}
-        </div>
-      )}
+      <Aviso mensaje={errorLista} onCerrar={() => setErrorLista('')} className="mb-4" />
 
       <div className="table-shell">
         {cargando ? (
@@ -66,6 +62,7 @@ export default function SalesPage() {
           <table className="table-base">
             <thead>
               <tr>
+                <th className="th">N° comprobante</th>
                 <th className="th">Fecha</th>
                 <th className="th">Cliente</th>
                 <th className="th">Método</th>
@@ -77,6 +74,7 @@ export default function SalesPage() {
             <tbody>
               {sales.map((v) => (
                 <tr key={v._id} className="hover:bg-ink/[0.02]">
+                  <td className="td font-medium tabular-nums text-ink">{v.numeroComprobante || '—'}</td>
                   <td className="td text-ink-soft">{formatDateTime(v.fecha)}</td>
                   <td className="td font-medium text-ink">{v.cliente || '—'}</td>
                   <td className="td text-ink-soft">{METODOS[v.metodoPago] || v.metodoPago}</td>
@@ -134,9 +132,12 @@ export default function SalesPage() {
                 </thead>
                 <tbody>
                   {detalle.items.map((it) => (
-                    <tr key={it.codigo}>
+                    <tr key={`${it.tipo || 'producto'}-${it.codigo}`}>
                       <td className="td">
-                        <p>{it.nombre}</p>
+                        <div className="flex items-center gap-2">
+                          <p>{it.nombre}</p>
+                          {it.tipo === 'servicio' && <Badge tone="accent">Servicio</Badge>}
+                        </div>
                         <p className="text-xs text-ink-muted">{it.codigo}</p>
                       </td>
                       <td className="td text-right tabular-nums">{it.cantidad}</td>

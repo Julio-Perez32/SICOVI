@@ -6,6 +6,7 @@ import useUnreadAlerts from '../hooks/useUnreadAlerts'
 const TITLES = {
   '/': 'Dashboard',
   '/productos': 'Productos',
+  '/servicios': 'Servicios',
   '/categorias': 'Categorías',
   '/proveedores': 'Proveedores',
   '/compras': 'Compras',
@@ -31,7 +32,7 @@ export default function Topbar({ onOpenMobileNav }) {
         <button type="button" onClick={onOpenMobileNav} className="btn-icon md:hidden">
           <Menu size={20} />
         </button>
-        <h1 className="text-lg font-semibold text-ink">{TITLES[pathname] || 'SICOVI'}</h1>
+        <h1 className="text-lg font-semibold text-ink">{TITLES[pathname] || 'ODM'}</h1>
       </div>
 
       <div className="flex items-center gap-2">

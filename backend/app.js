@@ -16,6 +16,7 @@ const { notFound, errorHandler } = require("./src/middlewares/error.middleware")
 // Rutas de cada módulo del sistema
 const authRoutes = require("./src/routes/auth.routes");
 const productRoutes = require("./src/routes/product.routes");
+const serviceRoutes = require("./src/routes/service.routes");
 const categoryRoutes = require("./src/routes/category.routes");
 const supplierRoutes = require("./src/routes/supplier.routes");
 const purchaseRoutes = require("./src/routes/purchase.routes");
@@ -46,6 +47,7 @@ app.get("/api/health", (req, res) => {
 // --- Rutas de la API ---
 app.use("/api/auth", authRoutes);
 app.use("/api/products", productRoutes);
+app.use("/api/services", serviceRoutes);
 app.use("/api/categories", categoryRoutes);
 app.use("/api/suppliers", supplierRoutes);
 app.use("/api/purchases", purchaseRoutes);

@@ -2,6 +2,8 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Wrench, User, Lock, ArrowRight, TriangleAlert } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
+import { taller } from '../config/taller'
+import { logoOdm } from '../assets/logoOdm'
 
 export default function LoginPage() {
   const navigate = useNavigate()
@@ -29,18 +31,22 @@ export default function LoginPage() {
     <div className="grid min-h-screen place-items-center bg-page px-4">
       <div className="w-full max-w-sm">
         <div className="mb-8 flex flex-col items-center gap-3 text-center">
-          <span className="grid h-12 w-12 place-items-center rounded-2xl bg-accent text-white">
-            <Wrench size={22} />
-          </span>
+          {logoOdm ? (
+            <img src={logoOdm} alt={taller.nombre} className="h-16 w-auto" />
+          ) : (
+            <span className="grid h-12 w-12 place-items-center rounded-2xl bg-accent text-white">
+              <Wrench size={22} />
+            </span>
+          )}
           <div>
-            <h1 className="text-lg font-semibold text-ink">SICOVI</h1>
-            <p className="text-sm text-ink-soft">Marca tus ventas del día</p>
+            <h1 className="text-2xl font-bold text-ink">{taller.nombre}</h1>
+            <p className="text-xs font-semibold tracking-wide text-ink-soft">{taller.subtitulo}</p>
           </div>
         </div>
 
         <form onSubmit={handleSubmit} className="rounded-2xl bg-card p-6 ring-1 ring-hairline">
           <h2 className="mb-1 text-base font-semibold text-ink">Iniciar sesión</h2>
-          <p className="mb-5 text-sm text-ink-soft">Panel de empleados</p>
+          <p className="mb-5 text-sm text-ink-soft">Panel de ventas</p>
 
           {error && (
             <div className="mb-4 flex items-start gap-2 rounded-lg bg-critical/10 px-3 py-2 text-sm text-critical">
@@ -82,6 +88,10 @@ export default function LoginPage() {
             {!enviando && <ArrowRight size={16} />}
           </button>
         </form>
+
+        <p className="mt-6 text-center text-[11px] leading-snug text-ink-muted">
+          {taller.sistema} · {taller.sistemaDescripcion}
+        </p>
       </div>
     </div>
   )

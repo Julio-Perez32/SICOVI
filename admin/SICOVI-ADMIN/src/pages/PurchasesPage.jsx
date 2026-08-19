@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Plus, Trash2, Eye, TriangleAlert } from 'lucide-react'
+import { Plus, Trash2, Eye } from 'lucide-react'
 import PageHeader from '../components/PageHeader'
 import Modal from '../components/Modal'
 import EmptyState from '../components/EmptyState'
+import Aviso from '../components/Aviso'
 import { formatCurrency, formatDate } from '../lib/format'
 import { apiFetch } from '../lib/api'
 import useSuppliers from '../hooks/useSuppliers'
@@ -137,12 +138,7 @@ export default function PurchasesPage() {
         }
       />
 
-      {errorLista && (
-        <div className="mb-4 flex items-center gap-2 rounded-lg bg-critical/10 px-3 py-2 text-sm text-critical">
-          <TriangleAlert size={16} />
-          {errorLista}
-        </div>
-      )}
+      <Aviso mensaje={errorLista} className="mb-4" />
 
       <div className="table-shell">
         {cargando ? (
@@ -199,12 +195,7 @@ export default function PurchasesPage() {
         }
       >
         <form id="purchase-form" onSubmit={handleSubmit} className="flex flex-col gap-4">
-          {errorForm && (
-            <div className="flex items-center gap-2 rounded-lg bg-critical/10 px-3 py-2 text-sm text-critical">
-              <TriangleAlert size={16} />
-              {errorForm}
-            </div>
-          )}
+          <Aviso mensaje={errorForm} />
 
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div>

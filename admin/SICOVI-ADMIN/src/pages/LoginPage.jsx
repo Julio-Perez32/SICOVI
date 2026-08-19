@@ -2,11 +2,12 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Wrench, Mail, Lock, ArrowRight, TriangleAlert } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
+import { marca } from '../config/marca'
 
 export default function LoginPage() {
   const navigate = useNavigate()
   const { login } = useAuth()
-  const [email, setEmail] = useState('admin@sicovi.com')
+  const [email, setEmail] = useState('pepesus3223@gmail.com')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [enviando, setEnviando] = useState(false)
@@ -37,8 +38,8 @@ export default function LoginPage() {
             <Wrench size={22} />
           </span>
           <div>
-            <h1 className="text-lg font-semibold text-ink">SICOVI</h1>
-            <p className="text-sm text-ink-soft">Sistema de Control de Compras, Ventas e Inventario</p>
+            <h1 className="text-2xl font-bold text-ink">{marca.taller}</h1>
+            <p className="text-xs font-semibold tracking-wide text-ink-soft">SERVICIO MECÁNICO</p>
           </div>
         </div>
 
@@ -62,7 +63,7 @@ export default function LoginPage() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               className="field-input pl-9"
-              placeholder="admin@sicovi.com"
+              placeholder="correo@ejemplo.com"
             />
           </div>
 
@@ -84,6 +85,10 @@ export default function LoginPage() {
             {!enviando && <ArrowRight size={16} />}
           </button>
         </form>
+
+        <p className="mt-6 text-center text-[11px] leading-snug text-ink-muted">
+          {marca.sistema} · {marca.sistemaDescripcion}
+        </p>
       </div>
     </div>
   )

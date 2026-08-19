@@ -1,4 +1,5 @@
 const { Supplier } = require("../model");
+const { responderError } = require("../utils/traducirError");
 
 const supplierController = {};
 
@@ -19,7 +20,7 @@ supplierController.createSupplier = async (req, res) => {
     const proveedor = await Supplier.create({ nombre, nit, nrc, direccion, telefono, email });
     res.status(201).json({ success: true, proveedor });
   } catch (error) {
-    res.status(400).json({ success: false, message: error.message });
+    responderError(res, error, "proveedor");
   }
 };
 
@@ -36,7 +37,7 @@ supplierController.updateSupplier = async (req, res) => {
     await proveedor.save();
     res.status(200).json({ success: true, proveedor });
   } catch (error) {
-    res.status(400).json({ success: false, message: error.message });
+    responderError(res, error, "proveedor");
   }
 };
 

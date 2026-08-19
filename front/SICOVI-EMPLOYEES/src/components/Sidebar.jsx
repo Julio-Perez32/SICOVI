@@ -1,5 +1,7 @@
 import { NavLink } from 'react-router-dom'
 import { ShoppingCart, Receipt, Wrench, X } from 'lucide-react'
+import { taller } from '../config/taller'
+import { logoOdm } from '../assets/logoOdm'
 
 const NAV_ITEMS = [
   { to: '/', label: 'Vender', icon: ShoppingCart, end: true },
@@ -27,13 +29,28 @@ function NavItems({ onNavigate }) {
 function Brand() {
   return (
     <div className="flex items-center gap-2.5 px-6 py-5">
-      <span className="grid h-9 w-9 place-items-center rounded-xl bg-accent text-white">
-        <Wrench size={18} />
-      </span>
+      {logoOdm ? (
+        <img src={logoOdm} alt={taller.nombre} className="h-9 w-auto shrink-0" />
+      ) : (
+        <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-accent text-white">
+          <Wrench size={18} />
+        </span>
+      )}
       <div className="leading-tight">
-        <p className="text-sm font-semibold text-ink">SICOVI</p>
-        <p className="text-xs text-ink-muted">Panel de empleados</p>
+        <p className="text-sm font-semibold text-ink">{taller.nombre}</p>
+        <p className="text-xs text-ink-muted">Panel de ventas</p>
       </div>
+    </div>
+  )
+}
+
+// Al pie: el sistema, discreto. Los documentos que ve el cliente llevan solo
+// la marca del taller; acá adentro sí tiene sentido decir con qué corre.
+function PieDeMarca() {
+  return (
+    <div className="border-t border-hairline px-4 py-4">
+      <p className="text-xs font-medium text-ink-soft">{taller.sistema}</p>
+      <p className="mt-0.5 text-[11px] leading-snug text-ink-muted">{taller.sistemaDescripcion}</p>
     </div>
   )
 }
@@ -45,9 +62,7 @@ export default function Sidebar({ mobileOpen = false, onCloseMobile }) {
       <aside className="hidden md:flex w-64 shrink-0 flex-col border-r border-hairline bg-card">
         <Brand />
         <NavItems />
-        <div className="border-t border-hairline px-4 py-4 text-xs text-ink-muted">
-          Taller de repuestos y lubricantes
-        </div>
+        <PieDeMarca />
       </aside>
 
       {/* Mobile: drawer superpuesto */}
@@ -67,6 +82,7 @@ export default function Sidebar({ mobileOpen = false, onCloseMobile }) {
               </button>
             </div>
             <NavItems onNavigate={onCloseMobile} />
+            <PieDeMarca />
           </aside>
         </div>
       )}

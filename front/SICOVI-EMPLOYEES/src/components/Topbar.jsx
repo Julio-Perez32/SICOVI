@@ -10,7 +10,7 @@ const TITLES = {
 export default function Topbar({ onOpenMobileNav }) {
   const { pathname } = useLocation()
   const navigate = useNavigate()
-  const { user, logout } = useAuth()
+  const { logout } = useAuth()
 
   async function handleLogout() {
     await logout()
@@ -23,30 +23,20 @@ export default function Topbar({ onOpenMobileNav }) {
         <button type="button" onClick={onOpenMobileNav} className="btn-icon md:hidden">
           <Menu size={20} />
         </button>
-        <h1 className="text-lg font-semibold text-ink">{TITLES[pathname] || 'SICOVI'}</h1>
+        <h1 className="text-lg font-semibold text-ink">{TITLES[pathname] || 'ODM'}</h1>
       </div>
 
-      <div className="flex items-center gap-2">
-        <div className="mx-1 hidden sm:flex items-center gap-2.5 rounded-lg px-2 py-1">
-          <span className="grid h-8 w-8 place-items-center rounded-full bg-accent/10 text-sm font-semibold text-accent">
-            {user?.nombre?.charAt(0) || 'E'}
-          </span>
-          <div className="leading-tight text-left">
-            <p className="text-sm font-medium text-ink">{user?.nombre}</p>
-            <p className="text-xs text-ink-muted">{user?.email}</p>
-          </div>
-        </div>
-
-        <button
-          type="button"
-          onClick={handleLogout}
-          className="btn-icon"
-          aria-label="Cerrar sesión"
-          title="Cerrar sesión"
-        >
-          <LogOut size={19} />
-        </button>
-      </div>
+      {/* Al ser una sola cuenta compartida de ventas, no tiene sentido mostrar
+          "quién" está conectado: siempre es la misma. Solo queda salir. */}
+      <button
+        type="button"
+        onClick={handleLogout}
+        className="btn-secondary px-3! py-1.5! text-sm"
+        title="Cerrar sesión"
+      >
+        <LogOut size={16} />
+        <span className="hidden sm:inline">Salir</span>
+      </button>
     </header>
   )
 }

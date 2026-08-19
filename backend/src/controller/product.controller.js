@@ -1,6 +1,7 @@
 const { Product } = require("../model");
 const { sanitizeProduct, sanitizeProducts } = require("../utils/sanitizeProduct");
 const cloudinary = require("../utils/cloudinary");
+const { responderError } = require("../utils/traducirError");
 
 const productController = {};
 
@@ -87,8 +88,7 @@ productController.createProduct = async (req, res) => {
     const producto = await Product.create(data);
     res.status(201).json({ success: true, producto });
   } catch (error) {
-    const status = error.code === 11000 ? 409 : 400;
-    res.status(status).json({ success: false, message: error.code === 11000 ? "Ya existe un producto con ese código" : error.message });
+    responderError(res, error, "producto");
   }
 };
 
@@ -126,7 +126,7 @@ productController.updateProduct = async (req, res) => {
     await producto.save();
     res.status(200).json({ success: true, producto });
   } catch (error) {
-    res.status(400).json({ success: false, message: error.message });
+    responderError(res, error, "producto");
   }
 };
 

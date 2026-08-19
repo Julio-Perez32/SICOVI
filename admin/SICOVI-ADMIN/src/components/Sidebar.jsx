@@ -7,15 +7,18 @@ import {
   ShoppingCart,
   Receipt,
   KeyRound,
+  Cog,
   BellRing,
   Wrench,
   X,
 } from 'lucide-react'
 import useUnreadAlerts from '../hooks/useUnreadAlerts'
+import { marca } from '../config/marca'
 
 const NAV_ITEMS = [
   { to: '/', label: 'Dashboard', icon: LayoutDashboard, end: true },
   { to: '/productos', label: 'Productos', icon: Package },
+  { to: '/servicios', label: 'Servicios', icon: Cog },
   { to: '/categorias', label: 'Categorías', icon: Tags },
   { to: '/proveedores', label: 'Proveedores', icon: Truck },
   { to: '/compras', label: 'Compras', icon: ShoppingCart },
@@ -59,8 +62,8 @@ function Brand() {
         <Wrench size={18} />
       </span>
       <div className="leading-tight">
-        <p className="text-sm font-semibold text-ink">SICOVI</p>
-        <p className="text-xs text-ink-muted">Panel de administrador</p>
+        <p className="text-sm font-semibold text-ink">{marca.taller}</p>
+        <p className="text-xs text-ink-muted">{marca.subtitulo}</p>
       </div>
     </div>
   )
@@ -73,8 +76,9 @@ export default function Sidebar({ mobileOpen = false, onCloseMobile }) {
       <aside className="hidden md:flex w-64 shrink-0 flex-col border-r border-hairline bg-card">
         <Brand />
         <NavItems />
-        <div className="border-t border-hairline px-4 py-4 text-xs text-ink-muted">
-          Taller de repuestos y lubricantes
+        <div className="border-t border-hairline px-4 py-4">
+          <p className="text-xs font-medium text-ink-soft">{marca.sistema}</p>
+          <p className="mt-0.5 text-[11px] leading-snug text-ink-muted">{marca.sistemaDescripcion}</p>
         </div>
       </aside>
 

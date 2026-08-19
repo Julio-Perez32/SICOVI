@@ -1,10 +1,9 @@
 import { useEffect, useMemo, useState } from 'react'
-import { CalendarDays, CalendarRange, Eye, TriangleAlert } from 'lucide-react'
+import { CalendarDays, CalendarRange, Receipt, TriangleAlert } from 'lucide-react'
 import PageHeader from '../components/PageHeader'
 import StatCard from '../components/StatCard'
-import Badge from '../components/Badge'
-import Modal from '../components/Modal'
 import EmptyState from '../components/EmptyState'
+import ReceiptModal from '../components/ReceiptModal'
 import { formatCurrency, formatDateTime } from '../lib/format'
 import { apiFetch } from '../lib/api'
 
@@ -89,6 +88,7 @@ export default function MySalesPage() {
           <table className="table-base">
             <thead>
               <tr>
+                <th className="th">N° comprobante</th>
                 <th className="th">Fecha</th>
                 <th className="th">Cliente</th>
                 <th className="th">Método</th>
@@ -100,6 +100,7 @@ export default function MySalesPage() {
             <tbody>
               {sales.map((v) => (
                 <tr key={v._id} className="hover:bg-ink/[0.02]">
+                  <td className="td font-medium tabular-nums text-ink">{v.numeroComprobante || '—'}</td>
                   <td className="td text-ink-soft">{formatDateTime(v.fecha)}</td>
                   <td className="td text-ink">{v.cliente || '—'}</td>
                   <td className="td text-ink-soft">{METODOS[v.metodoPago] || v.metodoPago}</td>
@@ -107,8 +108,13 @@ export default function MySalesPage() {
                   <td className="td text-right tabular-nums font-medium">{formatCurrency(v.total)}</td>
                   <td className="td">
                     <div className="flex justify-end">
-                      <button type="button" onClick={() => setDetalle(v)} className="btn-icon" aria-label="Ver detalle">
-                        <Eye size={15} />
+                      <button
+                        type="button"
+                        onClick={() => setDetalle(v)}
+                        className="btn-secondary px-2.5! py-1.5! text-xs"
+                      >
+                        <Receipt size={14} />
+                        Ver comprobante
                       </button>
                     </div>
                   </td>
@@ -119,50 +125,7 @@ export default function MySalesPage() {
         )}
       </div>
 
-      <Modal
-        open={!!detalle}
-        onClose={() => setDetalle(null)}
-        title="Detalle de la venta"
-        description={detalle ? `${formatDateTime(detalle.fecha)} · ${detalle.cliente || 'Consumidor final'}` : ''}
-        size="lg"
-      >
-        {detalle && (
-          <>
-            <div className="overflow-x-auto scroll-thin rounded-lg ring-1 ring-hairline">
-              <table className="table-base">
-                <thead>
-                  <tr>
-                    <th className="th">Producto</th>
-                    <th className="th text-right">Cantidad</th>
-                    <th className="th text-right">Precio</th>
-                    <th className="th text-right">Subtotal</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {detalle.items.map((it) => (
-                    <tr key={it.codigo}>
-                      <td className="td">
-                        <p>{it.nombre}</p>
-                        <p className="text-xs text-ink-muted">{it.codigo}</p>
-                      </td>
-                      <td className="td text-right tabular-nums">{it.cantidad}</td>
-                      <td className="td text-right tabular-nums">{formatCurrency(it.precioVentaUnitario)}</td>
-                      <td className="td text-right tabular-nums">{formatCurrency(it.subtotal)}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-            <div className="mt-3 flex items-center justify-between text-sm">
-              <Badge tone="accent">{METODOS[detalle.metodoPago] || detalle.metodoPago}</Badge>
-              <div>
-                <span className="text-ink-soft">Total: </span>
-                <span className="ml-2 font-semibold text-ink">{formatCurrency(detalle.total)}</span>
-              </div>
-            </div>
-          </>
-        )}
-      </Modal>
+      <ReceiptModal venta={detalle} onClose={() => setDetalle(null)} />
     </div>
   )
 }

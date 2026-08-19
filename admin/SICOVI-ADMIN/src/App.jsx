@@ -3,6 +3,7 @@ import AdminLayout from './layouts/AdminLayout'
 import LoginPage from './pages/LoginPage'
 import DashboardPage from './pages/DashboardPage'
 import ProductsPage from './pages/ProductsPage'
+import ServicesPage from './pages/ServicesPage'
 import CategoriesPage from './pages/CategoriesPage'
 import SuppliersPage from './pages/SuppliersPage'
 import PurchasesPage from './pages/PurchasesPage'
@@ -21,6 +22,7 @@ function App() {
       <Route element={<AdminLayout />}>
         <Route path="/" element={<DashboardPage />} />
         <Route path="/productos" element={<ProductsPage />} />
+        <Route path="/servicios" element={<ServicesPage />} />
         <Route path="/categorias" element={<CategoriesPage />} />
         <Route path="/proveedores" element={<SuppliersPage />} />
         <Route path="/compras" element={<PurchasesPage />} />

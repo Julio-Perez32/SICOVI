@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react'
-import { Plus, Pencil, Trash2, TriangleAlert } from 'lucide-react'
+import { Plus, Pencil, Trash2 } from 'lucide-react'
 import PageHeader from '../components/PageHeader'
 import Badge from '../components/Badge'
 import Modal from '../components/Modal'
 import EmptyState from '../components/EmptyState'
+import Aviso from '../components/Aviso'
 import { apiFetch } from '../lib/api'
 
 const emptyForm = { nombre: '', descripcion: '' }
@@ -75,7 +76,7 @@ export default function CategoriesPage() {
       await apiFetch(`/categories/${categoria._id}`, { method: 'DELETE' })
       await cargarCategorias()
     } catch (err) {
-      alert(err.message)
+      setErrorLista(err.message)
     }
   }
 
@@ -92,12 +93,7 @@ export default function CategoriesPage() {
         }
       />
 
-      {errorLista && (
-        <div className="mb-4 flex items-center gap-2 rounded-lg bg-critical/10 px-3 py-2 text-sm text-critical">
-          <TriangleAlert size={16} />
-          {errorLista}
-        </div>
-      )}
+      <Aviso mensaje={errorLista} onCerrar={() => setErrorLista('')} className="mb-4" />
 
       <div className="table-shell">
         {cargando ? (
@@ -156,12 +152,7 @@ export default function CategoriesPage() {
         }
       >
         <form id="category-form" onSubmit={handleSubmit} className="flex flex-col gap-4">
-          {errorForm && (
-            <div className="flex items-center gap-2 rounded-lg bg-critical/10 px-3 py-2 text-sm text-critical">
-              <TriangleAlert size={16} />
-              {errorForm}
-            </div>
-          )}
+          <Aviso mensaje={errorForm} />
           <div>
             <label className="field-label" htmlFor="nombre">Nombre</label>
             <input id="nombre" className="field-input" value={form.nombre} onChange={(e) => setForm({ ...form, nombre: e.target.value })} placeholder="Lubricantes" required />

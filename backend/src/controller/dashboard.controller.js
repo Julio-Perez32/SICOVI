@@ -141,6 +141,9 @@ dashboardController.getTopProducts = async (req, res) => {
     const top = await Sale.aggregate([
       { $match: { anulada: false } },
       { $unwind: "$items" },
+      // Solo líneas de producto: los servicios no tienen "producto" y se
+      // agruparían todos juntos bajo null, ensuciando el ranking.
+      { $match: { "items.producto": { $ne: null } } },
       {
         $group: {
           _id: "$items.producto",

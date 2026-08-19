@@ -1,5 +1,6 @@
 const { sendTokenResponse } = require("../utils/generateToken");
 const { User } = require("../model");
+const { responderError } = require("../utils/traducirError");
 
 const authController = {};
 
@@ -92,8 +93,7 @@ authController.createEmployee = async (req, res) => {
 
     res.status(201).json({ success: true, user });
   } catch (error) {
-    const status = error.code === 11000 ? 409 : 400;
-    res.status(status).json({ success: false, message: error.code === 11000 ? "Ya existe un usuario con ese correo o username" : error.message });
+    responderError(res, error, "usuario");
   }
 };
 
@@ -128,11 +128,7 @@ authController.updateEmployee = async (req, res) => {
     await user.save();
     res.status(200).json({ success: true, user });
   } catch (error) {
-    const duplicado = error.code === 11000;
-    res.status(duplicado ? 409 : 400).json({
-      success: false,
-      message: duplicado ? "Ya existe un usuario con ese username" : error.message,
-    });
+    responderError(res, error, "usuario");
   }
 };
 
@@ -155,7 +151,7 @@ authController.resetEmployeePassword = async (req, res) => {
 
     res.status(200).json({ success: true, message: "Contraseña restablecida" });
   } catch (error) {
-    res.status(400).json({ success: false, message: error.message });
+    responderError(res, error, "usuario");
   }
 };
 

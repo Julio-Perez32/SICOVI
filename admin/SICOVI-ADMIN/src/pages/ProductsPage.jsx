@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react'
-import { Search, Plus, Pencil, Trash2, ImageOff, TriangleAlert, ChevronLeft, ChevronRight } from 'lucide-react'
+import { Search, Plus, Pencil, Trash2, ImageOff, ChevronLeft, ChevronRight } from 'lucide-react'
 import PageHeader from '../components/PageHeader'
 import Badge from '../components/Badge'
 import Modal from '../components/Modal'
 import EmptyState from '../components/EmptyState'
+import Aviso from '../components/Aviso'
 import { formatCurrency } from '../lib/format'
 import { apiFetch } from '../lib/api'
 import useCategories from '../hooks/useCategories'
@@ -136,7 +137,7 @@ export default function ProductsPage() {
       await apiFetch(`/products/${producto._id}`, { method: 'DELETE' })
       await cargarProductos(pagina)
     } catch (err) {
-      alert(err.message)
+      setErrorLista(err.message)
     }
   }
 
@@ -165,12 +166,7 @@ export default function ProductsPage() {
         </div>
       </div>
 
-      {errorLista && (
-        <div className="mb-4 flex items-center gap-2 rounded-lg bg-critical/10 px-3 py-2 text-sm text-critical">
-          <TriangleAlert size={16} />
-          {errorLista}
-        </div>
-      )}
+      <Aviso mensaje={errorLista} onCerrar={() => setErrorLista('')} className="mb-4" />
 
       <div className="table-shell">
         {cargando ? (
@@ -276,12 +272,7 @@ export default function ProductsPage() {
         }
       >
         <form id="product-form" onSubmit={handleSubmit} className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          {errorForm && (
-            <div className="sm:col-span-2 flex items-center gap-2 rounded-lg bg-critical/10 px-3 py-2 text-sm text-critical">
-              <TriangleAlert size={16} />
-              {errorForm}
-            </div>
-          )}
+          <Aviso mensaje={errorForm} className="sm:col-span-2" />
 
           <div>
             <label className="field-label" htmlFor="codigo">Código</label>

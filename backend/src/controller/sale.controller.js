@@ -1,23 +1,27 @@
 const mongoose = require("mongoose");
 const ApiError = require("../utils/ApiError");
-const { Sale, Product, StockMovement } = require("../model");
+const { Sale, Product, Service, StockMovement, Counter } = require("../model");
 const evaluarAlertaStock = require("../utils/stockAlert");
 
 const saleController = {};
 
 // POST /api/sales (admin o empleado)
-// body: { cliente?, metodoPago?, items: [{ productoId, cantidad }] }
-// El precio de venta y el costo (para el margen histórico) se toman del
-// producto en este momento, nunca del body, para que no se puedan alterar
-// desde el cliente.
+// body: { cliente?, vehiculo?, metodoPago?, items: [...] }
+// Cada línea puede ser un producto o un servicio:
+//   { tipo: "producto", productoId, cantidad }
+//   { tipo: "servicio", servicioId, cantidad }
+// Los precios (y el costo, para el margen histórico) se toman del catálogo
+// en este momento, nunca del body, para que no se puedan alterar desde el
+// cliente. Los servicios son mano de obra: no tienen costo de inventario
+// ni descuentan stock.
 saleController.createSale = async (req, res) => {
   const session = await mongoose.startSession();
 
   try {
-    const { cliente, metodoPago, items } = req.body;
+    const { cliente, vehiculo, metodoPago, items } = req.body;
 
     if (!Array.isArray(items) || items.length === 0) {
-      throw new ApiError(400, "La venta debe tener al menos un producto");
+      throw new ApiError(400, "La venta debe tener al menos un producto o servicio");
     }
 
     let sale;
@@ -28,8 +32,41 @@ saleController.createSale = async (req, res) => {
       let total = 0;
 
       for (const item of items) {
-        if (!item.productoId || !item.cantidad || item.cantidad <= 0) {
-          throw new ApiError(400, "Cada línea necesita productoId y una cantidad válida");
+        const esServicio = item.tipo === "servicio" || (!item.productoId && item.servicioId);
+
+        if (!item.cantidad || item.cantidad <= 0) {
+          throw new ApiError(400, "Cada línea necesita una cantidad válida");
+        }
+        const cantidad = Number(item.cantidad);
+
+        if (esServicio) {
+          if (!item.servicioId) {
+            throw new ApiError(400, "Cada línea de servicio necesita servicioId");
+          }
+
+          const servicio = await Service.findById(item.servicioId).session(session);
+          if (!servicio || !servicio.activo) {
+            throw new ApiError(404, `Servicio no encontrado: ${item.servicioId}`);
+          }
+
+          const subtotalItem = Number((cantidad * servicio.precio).toFixed(2));
+
+          itemsProcesados.push({
+            tipo: "servicio",
+            servicio: servicio._id,
+            codigo: servicio.codigo,
+            nombre: servicio.nombre,
+            cantidad,
+            precioVentaUnitario: servicio.precio,
+            precioCostoUnitario: 0, // mano de obra: sin costo de inventario
+            subtotal: subtotalItem,
+          });
+          total += subtotalItem;
+          continue;
+        }
+
+        if (!item.productoId) {
+          throw new ApiError(400, "Cada línea de producto necesita productoId");
         }
 
         const producto = await Product.findById(item.productoId).session(session);
@@ -37,7 +74,6 @@ saleController.createSale = async (req, res) => {
           throw new ApiError(404, `Producto no encontrado: ${item.productoId}`);
         }
 
-        const cantidad = Number(item.cantidad);
         if (producto.stock < cantidad) {
           throw new ApiError(
             400,
@@ -66,6 +102,7 @@ saleController.createSale = async (req, res) => {
         );
 
         itemsProcesados.push({
+          tipo: "producto",
           producto: producto._id,
           codigo: producto.codigo,
           nombre: producto.nombre,
@@ -78,11 +115,17 @@ saleController.createSale = async (req, res) => {
         productosAfectados.push(producto._id);
       }
 
+      // Correlativo del comprobante (atómico, dentro de la misma transacción)
+      const correlativo = await Counter.siguiente("comprobante", session);
+      const numeroComprobante = `OS-${String(correlativo).padStart(5, "0")}`; // OS = Orden de Servicio
+
       const creada = await Sale.create(
         [
           {
+            numeroComprobante,
             vendedor: req.user._id,
             cliente,
+            vehiculo,
             metodoPago,
             items: itemsProcesados,
             total: Number(total.toFixed(2)),
@@ -169,6 +212,10 @@ saleController.voidSale = async (req, res) => {
 
     await session.withTransaction(async () => {
       for (const item of venta.items) {
+        // Solo los productos devuelven stock; los servicios (mano de obra)
+        // no tienen nada que reponer al inventario.
+        if (item.tipo === "servicio" || !item.producto) continue;
+
         const producto = await Product.findById(item.producto).session(session);
         if (producto) {
           producto.stock += item.cantidad;

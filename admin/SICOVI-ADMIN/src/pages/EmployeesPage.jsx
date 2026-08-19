@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react'
-import { KeyRound, UserCog, ShieldCheck, TriangleAlert } from 'lucide-react'
+import { KeyRound, UserCog, ShieldCheck } from 'lucide-react'
 import PageHeader from '../components/PageHeader'
 import Badge from '../components/Badge'
 import Modal from '../components/Modal'
 import EmptyState from '../components/EmptyState'
+import Aviso from '../components/Aviso'
 import { formatDate } from '../lib/format'
 import { apiFetch } from '../lib/api'
 
@@ -116,12 +117,7 @@ export default function EmployeesPage() {
         description="Cuenta compartida que usa cualquiera que esté en caja para registrar ventas"
       />
 
-      {errorLista && (
-        <div className="mb-4 flex items-center gap-2 rounded-lg bg-critical/10 px-3 py-2 text-sm text-critical">
-          <TriangleAlert size={16} />
-          {errorLista}
-        </div>
-      )}
+      <Aviso mensaje={errorLista} className="mb-4" />
 
       {cargando ? (
         <EmptyState title="Cargando cuenta..." />
@@ -198,12 +194,7 @@ export default function EmployeesPage() {
         }
       >
         <form id="username-form" onSubmit={handleSubmitUsuario} className="flex flex-col gap-4">
-          {errorUsuario && (
-            <div className="flex items-center gap-2 rounded-lg bg-critical/10 px-3 py-2 text-sm text-critical">
-              <TriangleAlert size={16} />
-              {errorUsuario}
-            </div>
-          )}
+          <Aviso mensaje={errorUsuario} />
           <div>
             <label className="field-label" htmlFor="username">Usuario</label>
             <input
@@ -233,12 +224,7 @@ export default function EmployeesPage() {
         }
       >
         <form id="reset-password-form" onSubmit={handleSubmitPassword} className="flex flex-col gap-4">
-          {errorPassword && (
-            <div className="flex items-center gap-2 rounded-lg bg-critical/10 px-3 py-2 text-sm text-critical">
-              <TriangleAlert size={16} />
-              {errorPassword}
-            </div>
-          )}
+          <Aviso mensaje={errorPassword} />
           {exitoPassword && (
             <div className="rounded-lg bg-good/10 px-3 py-2 text-sm text-good">Contraseña actualizada</div>
           )}

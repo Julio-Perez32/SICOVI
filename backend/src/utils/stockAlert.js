@@ -1,5 +1,6 @@
 const { Notification, User } = require("../model");
 const sendEmail = require("./sendEmail");
+const config = require("../../config");
 
 // Qué tan grave está el stock de un producto en este momento.
 function calcularSeveridad(product) {
@@ -13,7 +14,7 @@ function calcularSeveridad(product) {
 // última que se avisó (product.ultimoTipoAlerta):
 //  - si es distinta (pasó de saludable a stock_bajo, de stock_bajo a
 //    sin_stock, o -tras reabastecer- volvió a caer) crea una notificación
-//    nueva y avisa a los admins por correo.
+//    nueva (la que se ve en la campanita y en la página de Alertas).
 //  - si es la misma severidad que la última vez, no repite el aviso.
 //  - si el producto ya está saludable, limpia el estado para la próxima vez.
 //
@@ -42,6 +43,11 @@ async function evaluarAlertaStock(product) {
 
   product.ultimoTipoAlerta = severidad;
   await product.save();
+
+  // El aviso por correo es opcional: la alerta ya quedó guardada arriba, que
+  // es lo que ve el admin en el sistema. Se prende con ALERTAS_POR_CORREO=true
+  // en el .env (ver config.alertasPorCorreo).
+  if (!config.alertasPorCorreo) return;
 
   const admins = await User.find({ rol: "admin", activo: true }).select("email");
   if (admins.length) {

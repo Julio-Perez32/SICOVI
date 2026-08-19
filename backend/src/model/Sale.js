@@ -1,11 +1,25 @@
 const mongoose = require("mongoose");
 
+// Una línea de la venta puede ser un producto (baja stock) o un servicio
+// de mano de obra (no toca inventario). Los datos de nombre/código/precios
+// se guardan congelados en la línea, así el histórico no se distorsiona si
+// después cambian en el catálogo.
 const saleItemSchema = new mongoose.Schema(
   {
+    tipo: {
+      type: String,
+      enum: ["producto", "servicio"],
+      default: "producto",
+    },
     producto: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Product",
-      required: true,
+      default: null,
+    },
+    servicio: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Service",
+      default: null,
     },
     codigo: { type: String, trim: true, uppercase: true },
     nombre: { type: String, trim: true },
@@ -19,6 +33,11 @@ const saleItemSchema = new mongoose.Schema(
 
 const saleSchema = new mongoose.Schema(
   {
+    numeroComprobante: {
+      type: String,
+      trim: true,
+      index: true,
+    },
     vendedor: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
@@ -32,6 +51,11 @@ const saleSchema = new mongoose.Schema(
       type: String,
       trim: true,
     },
+    // Vehículo al que se le hizo el trabajo -- va en la orden de servicio.
+    vehiculo: {
+      type: String,
+      trim: true,
+    },
     metodoPago: {
       type: String,
       enum: ["efectivo", "tarjeta", "transferencia", "otro"],
@@ -41,7 +65,7 @@ const saleSchema = new mongoose.Schema(
       type: [saleItemSchema],
       validate: {
         validator: (items) => Array.isArray(items) && items.length > 0,
-        message: "La venta debe tener al menos un producto",
+        message: "La venta debe tener al menos un producto o servicio",
       },
     },
     total: { type: Number, required: true, min: 0 },

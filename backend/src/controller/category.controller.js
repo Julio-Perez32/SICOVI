@@ -1,4 +1,5 @@
 const { Category } = require("../model");
+const { responderError } = require("../utils/traducirError");
 
 const categoryController = {};
 
@@ -19,8 +20,7 @@ categoryController.createCategory = async (req, res) => {
     const categoria = await Category.create({ nombre, descripcion });
     res.status(201).json({ success: true, categoria });
   } catch (error) {
-    const status = error.code === 11000 ? 409 : 400;
-    res.status(status).json({ success: false, message: error.code === 11000 ? "Ya existe una categoría con ese nombre" : error.message });
+    responderError(res, error, "categoría");
   }
 };
 
@@ -37,7 +37,7 @@ categoryController.updateCategory = async (req, res) => {
     await categoria.save();
     res.status(200).json({ success: true, categoria });
   } catch (error) {
-    res.status(400).json({ success: false, message: error.message });
+    responderError(res, error, "categoría");
   }
 };
 

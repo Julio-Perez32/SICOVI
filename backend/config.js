@@ -37,6 +37,11 @@ const config = {
   },
 
   defaultStockMinimo: Number(process.env.DEFAULT_STOCK_MINIMO) || 5,
+
+  // Las alertas de stock SIEMPRE quedan guardadas en el sistema (campanita
+  // + página de Alertas). Este interruptor controla si ADEMÁS se manda un
+  // correo a los admins -- ponelo en "true" en el .env para prenderlo.
+  alertasPorCorreo: process.env.ALERTAS_POR_CORREO === "true",
 };
 
 module.exports = config;

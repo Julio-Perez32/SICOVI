@@ -3,6 +3,7 @@ import { PackageX, TriangleAlert, Check } from 'lucide-react'
 import PageHeader from '../components/PageHeader'
 import Badge from '../components/Badge'
 import EmptyState from '../components/EmptyState'
+import Aviso from '../components/Aviso'
 import { formatDateTime } from '../lib/format'
 import { apiFetch } from '../lib/api'
 
@@ -51,12 +52,7 @@ export default function AlertsPage() {
         description="Avisos automáticos cuando un producto queda bajo o sin stock"
       />
 
-      {errorLista && (
-        <div className="mb-4 flex items-center gap-2 rounded-lg bg-critical/10 px-3 py-2 text-sm text-critical">
-          <TriangleAlert size={16} />
-          {errorLista}
-        </div>
-      )}
+      <Aviso mensaje={errorLista} className="mb-4" />
 
       {cargando ? (
         <div className="table-shell">
