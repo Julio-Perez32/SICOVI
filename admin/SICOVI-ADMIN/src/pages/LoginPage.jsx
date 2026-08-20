@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { Wrench, Mail, Lock, ArrowRight, TriangleAlert } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import { marca } from '../config/marca'
+import { logoOdm } from '../assets/logoOdm'
 
 export default function LoginPage() {
   const navigate = useNavigate()
@@ -34,9 +35,13 @@ export default function LoginPage() {
     <div className="grid min-h-screen place-items-center bg-page px-4">
       <div className="w-full max-w-sm">
         <div className="mb-8 flex flex-col items-center gap-3 text-center">
-          <span className="grid h-12 w-12 place-items-center rounded-2xl bg-accent text-white">
-            <Wrench size={22} />
-          </span>
+          {logoOdm ? (
+            <img src={logoOdm} alt={marca.taller} className="h-16 w-auto rounded" />
+          ) : (
+            <span className="grid h-12 w-12 place-items-center rounded-2xl bg-accent text-white">
+              <Wrench size={22} />
+            </span>
+          )}
           <div>
             <h1 className="text-2xl font-bold text-ink">{marca.taller}</h1>
             <p className="text-xs font-semibold tracking-wide text-ink-soft">SERVICIO MECÁNICO</p>

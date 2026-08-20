@@ -1,7 +1,7 @@
 import { jsPDF } from 'jspdf'
 import autoTable from 'jspdf-autotable'
 import { taller } from '../config/taller'
-import { logoOdm, logoOdmRatio } from '../assets/logoOdm'
+import { logoOdm, logoOdmRatio, logoOdmFormato } from '../assets/logoOdm'
 import { formatCurrency } from './format'
 
 // Genera la ORDEN DE SERVICIO en PDF, replicando la plantilla de ODM.
@@ -73,7 +73,7 @@ function encabezado(doc, venta) {
   const cajaLogo = { x: MARGEN + 10, y: 14, alto: 26 }
   if (logoOdm) {
     const ancho = cajaLogo.alto * (logoOdmRatio || 1)
-    doc.addImage(logoOdm, 'PNG', cajaLogo.x, cajaLogo.y, ancho, cajaLogo.alto)
+    doc.addImage(logoOdm, logoOdmFormato || 'PNG', cajaLogo.x, cajaLogo.y, ancho, cajaLogo.alto)
     doc.setFont('helvetica', 'bold')
     doc.setFontSize(9)
     doc.setTextColor(...NEGRO)

@@ -14,6 +14,7 @@ import {
 } from 'lucide-react'
 import useUnreadAlerts from '../hooks/useUnreadAlerts'
 import { marca } from '../config/marca'
+import { logoOdm } from '../assets/logoOdm'
 
 const NAV_ITEMS = [
   { to: '/', label: 'Dashboard', icon: LayoutDashboard, end: true },
@@ -58,9 +59,13 @@ function NavItems({ onNavigate }) {
 function Brand() {
   return (
     <div className="flex items-center gap-2.5 px-6 py-5">
-      <span className="grid h-9 w-9 place-items-center rounded-xl bg-accent text-white">
-        <Wrench size={18} />
-      </span>
+      {logoOdm ? (
+        <img src={logoOdm} alt={marca.taller} className="h-9 w-auto shrink-0 rounded" />
+      ) : (
+        <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-accent text-white">
+          <Wrench size={18} />
+        </span>
+      )}
       <div className="leading-tight">
         <p className="text-sm font-semibold text-ink">{marca.taller}</p>
         <p className="text-xs text-ink-muted">{marca.subtitulo}</p>

@@ -27,13 +27,30 @@ const buf = fs.readFileSync(origen)
 const dataUrl = `data:${TIPOS[ext]};base64,${buf.toString('base64')}`
 
 // Se lee el tamaño real para no deformar el logo al dibujarlo.
-let ratio = 1
-if (ext === '.png') {
-  // Cabecera IHDR de un PNG: ancho y alto en los bytes 16..24
-  const ancho = buf.readUInt32BE(16)
-  const alto = buf.readUInt32BE(20)
-  if (ancho && alto) ratio = ancho / alto
+function medirPng(b) {
+  // Cabecera IHDR: ancho y alto en los bytes 16..24
+  return { ancho: b.readUInt32BE(16), alto: b.readUInt32BE(20) }
 }
+
+function medirJpeg(b) {
+  // Se recorren los segmentos hasta encontrar un SOF, que es el que trae
+  // las dimensiones reales de la imagen.
+  let i = 2
+  while (i < b.length - 9) {
+    if (b[i] !== 0xff) { i += 1; continue }
+    const marca = b[i + 1]
+    const esSOF = (marca >= 0xc0 && marca <= 0xc3) || (marca >= 0xc5 && marca <= 0xc7) ||
+                  (marca >= 0xc9 && marca <= 0xcb) || (marca >= 0xcd && marca <= 0xcf)
+    if (esSOF) return { alto: b.readUInt16BE(i + 5), ancho: b.readUInt16BE(i + 7) }
+    i += 2 + b.readUInt16BE(i + 2)
+  }
+  return { ancho: 0, alto: 0 }
+}
+
+let ratio = 1
+const { ancho, alto } = ext === '.png' ? medirPng(buf) : medirJpeg(buf)
+if (ancho && alto) ratio = ancho / alto
+else console.warn('No pude leer el tamaño de la imagen; se asume cuadrada.')
 
 const salida = `// Logo de ODM para la orden de servicio, guardado como data URL para que el
 // PDF se pueda generar sin esperar a que cargue ninguna imagen.
@@ -44,8 +61,11 @@ export const logoOdm = '${dataUrl}'
 
 // Proporción ancho/alto del logo, para dibujarlo sin deformarlo.
 export const logoOdmRatio = ${ratio.toFixed(4)}
+
+// Formato, para que jsPDF sepa cómo incrustarlo.
+export const logoOdmFormato = '${ext === '.png' ? 'PNG' : 'JPEG'}'
 `
 
 fs.writeFileSync('src/assets/logoOdm.js', salida)
-console.log(`Logo incrustado (${(buf.length / 1024).toFixed(1)} KB, proporción ${ratio.toFixed(2)}).`)
+console.log(`Logo incrustado: ${ancho}x${alto}px, ${(buf.length / 1024).toFixed(1)} KB (proporción ${ratio.toFixed(2)}).`)
 console.log('Ya sale en la orden de servicio -- recargá la página.')
